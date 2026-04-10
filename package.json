@@ -1,0 +1,12 @@
+{
+  "name": "ai-agent-nft",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "compile": "npm run compile --workspace=@ai-agent-nft/contracts",
+    "test": "npm run test --workspace=@ai-agent-nft/contracts",
+    "coverage": "npm run coverage --workspace=@ai-agent-nft/contracts"
+  }
+}
