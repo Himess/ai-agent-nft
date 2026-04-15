@@ -24,7 +24,8 @@ const envSchema = z.object({
   AGENT_ID: z.coerce.number().default(0),
 
   // Agent Config
-  AGENT_NAME: z.string().default("HermesAgent"),
+  AGENT_NAME: z.string().default("The Seventh"),
+  PROJECT_NAME: z.string().default("SURVIVORS"),
   LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),
 });
 

@@ -5,7 +5,7 @@ async function main() {
   const network = await ethers.provider.getNetwork();
 
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-  console.log("  AI Agent NFT — Full Deployment");
+  console.log("  SURVIVORS — Full Deployment (agent: The Seventh)");
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
   console.log(`  Network:  ${network.name} (chainId: ${network.chainId})`);
   console.log(`  Deployer: ${deployer.address}`);
@@ -37,13 +37,13 @@ async function main() {
   // ── Step 2: Deploy AgentNFT ───────────────────────────────────
   console.log("2/8  Deploying AgentNFT...");
   const AgentNFT = await ethers.getContractFactory("AgentNFT");
-  const nft = await AgentNFT.deploy("AI Agent NFT", "AGENT", MINT_PRICE, ROYALTY_BPS);
+  const nft = await AgentNFT.deploy("SURVIVORS", "SVVR", MINT_PRICE, ROYALTY_BPS);
   await nft.waitForDeployment();
-  console.log(`     AgentNFT: ${await nft.getAddress()}\n`);
+  console.log(`     SurvivorsNFT: ${await nft.getAddress()}\n`);
 
-  // ── Step 3: Owner mints token #0 (Agent's NFT) ────────────────
-  console.log("3/8  Minting Agent NFT (token #0)...");
-  const mintTx = await nft.ownerMint(deployer.address, 1);
+  // ── Step 3: Owner mints token #0 (Agent's NFT, from reserved/vault bucket) ──
+  console.log("3/8  Minting Agent NFT (token #0) — The Seventh vault seat...");
+  const mintTx = await nft.reservedMint(deployer.address, 1);
   await mintTx.wait();
   console.log(`     Token #0 minted to ${deployer.address}\n`);
 
@@ -85,7 +85,7 @@ async function main() {
   // ── Step 7: Register Agent Identity ───────────────────────────
   console.log("7/8  Registering Agent Identity...");
   const registerTx = await identity.registerAgent(
-    "HermesAgent",
+    "The Seventh",
     "ipfs://TODO", // Replace with actual IPFS URI
     await agentAccount.getAddress()
   );
@@ -105,7 +105,7 @@ async function main() {
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
   console.log("  DEPLOYMENT COMPLETE");
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-  console.log(`  AgentNFT:         ${await nft.getAddress()}`);
+  console.log(`  SurvivorsNFT:     ${await nft.getAddress()}`);
   console.log(`  RevenueSplitter:  ${await splitter.getAddress()}`);
   console.log(`  AgentAccount:     ${await agentAccount.getAddress()}`);
   console.log(`  AgentIdentity:    ${await identity.getAddress()}`);
@@ -113,8 +113,10 @@ async function main() {
   console.log("\nNext steps:");
   console.log("  1. Verify contracts on Etherscan");
   console.log("  2. Configure approved targets on AgentAccount");
-  console.log("  3. Set base URI on AgentNFT");
-  console.log("  4. Enable mint: nft.setMintActive(true)");
+  console.log("  3. Set base URI on SurvivorsNFT");
+  console.log("  4. Set WL Merkle root: nft.setWLMerkleRoot(root)");
+  console.log("  5. Open WL phase:      nft.setPhase(1)  // Whitelist");
+  console.log("  6. Later open public:  nft.setPhase(2)  // Public FCFS");
 }
 
 main().catch((error) => {

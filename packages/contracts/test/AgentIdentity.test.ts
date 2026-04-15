@@ -45,10 +45,10 @@ describe("AgentIdentity", function () {
       const { identity, owner, agentTBA } = await loadFixture(deployAgentIdentity);
 
       await expect(
-        identity.registerAgent("HermesAgent", "ipfs://Qm...", agentTBA.address)
+        identity.registerAgent("The Seventh", "ipfs://Qm...", agentTBA.address)
       )
         .to.emit(identity, "AgentRegistered")
-        .withArgs(0, "HermesAgent", agentTBA.address);
+        .withArgs(0, "The Seventh", agentTBA.address);
 
       expect(await identity.totalAgents()).to.equal(1);
       expect(await identity.ownerOf(0)).to.equal(owner.address);
@@ -56,10 +56,10 @@ describe("AgentIdentity", function () {
 
     it("should store correct agent info", async function () {
       const { identity, agentTBA } = await loadFixture(deployAgentIdentity);
-      await identity.registerAgent("HermesAgent", "ipfs://Qm...", agentTBA.address);
+      await identity.registerAgent("The Seventh", "ipfs://Qm...", agentTBA.address);
 
       const info = await identity.getAgentInfo(0);
-      expect(info.name).to.equal("HermesAgent");
+      expect(info.name).to.equal("The Seventh");
       expect(info.walletAddress).to.equal(agentTBA.address);
       expect(info.reputationScore).to.equal(0);
       expect(info.totalDecisions).to.equal(0);
@@ -69,7 +69,7 @@ describe("AgentIdentity", function () {
 
     it("should set correct token URI", async function () {
       const { identity, agentTBA } = await loadFixture(deployAgentIdentity);
-      await identity.registerAgent("HermesAgent", "ipfs://Qm...", agentTBA.address);
+      await identity.registerAgent("The Seventh", "ipfs://Qm...", agentTBA.address);
       expect(await identity.tokenURI(0)).to.equal("ipfs://Qm...");
     });
 

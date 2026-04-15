@@ -23,11 +23,11 @@ async function deployFullSystem() {
 
   // ── Step 2: Deploy AgentNFT (splitter not set yet) ────────────
   const AgentNFT = await ethers.getContractFactory("AgentNFT");
-  const nft = await AgentNFT.deploy("AI Agent NFT", "AGENT", MINT_PRICE, ROYALTY_BPS);
+  const nft = await AgentNFT.deploy("SURVIVORS", "SVVR", MINT_PRICE, ROYALTY_BPS);
   await nft.waitForDeployment();
 
-  // ── Step 3: Owner mints token #0 (the Agent's NFT) ────────────
-  await nft.ownerMint(deployer.address, 1);
+  // ── Step 3: Owner mints token #0 (the Agent's NFT — vault seat) ──
+  await nft.reservedMint(deployer.address, 1);
   expect(await nft.ownerOf(0)).to.equal(deployer.address);
 
   // ── Step 4: Deploy AgentAccount (TBA) bound to token #0 ──────
@@ -62,7 +62,7 @@ async function deployFullSystem() {
   // ── Step 8: Register agent identity ───────────────────────────
   const agentId = 0n;
   await identity.registerAgent(
-    "HermesAgent",
+    "The Seventh",
     "ipfs://QmAgent...",
     await agentAccount.getAddress()
   );
@@ -123,7 +123,7 @@ describe("FullFlow Integration", function () {
     it("should register and verify agent identity", async function () {
       const { identity, agentAccount, agentId } = await loadFixture(deployFullSystem);
       const info = await identity.getAgentInfo(agentId);
-      expect(info.name).to.equal("HermesAgent");
+      expect(info.name).to.equal("The Seventh");
       expect(info.walletAddress).to.equal(await agentAccount.getAddress());
       expect(info.verified).to.be.true;
     });
@@ -150,16 +150,17 @@ describe("FullFlow Integration", function () {
 
   describe("Mint → Revenue Split", function () {
     it("should split mint revenue correctly (50/20/30)", async function () {
-      const { nft, splitter, agentAccount, founder1, founder2, user1, user2, user3 } =
+      const { nft, splitter, agentAccount, founder1, founder2 } =
         await loadFixture(deployFullSystem);
 
       // Enable public mint
-      await nft.setMintActive(true);
+      await nft.setPhase(2); // Public
 
-      // 3 users mint 10 NFTs total
-      await nft.connect(user1).mint(5, { value: MINT_PRICE * 5n });
-      await nft.connect(user2).mint(3, { value: MINT_PRICE * 3n });
-      await nft.connect(user3).mint(2, { value: MINT_PRICE * 2n });
+      // 10 fresh signers each FCFS-mint 1 NFT (signers 8..17 are free)
+      const signers = await ethers.getSigners();
+      for (let i = 8; i < 18; i++) {
+        await nft.connect(signers[i]).publicMint({ value: MINT_PRICE });
+      }
 
       // Total: 10 * 0.01 ETH = 0.1 ETH in NFT contract
       expect(await ethers.provider.getBalance(await nft.getAddress())).to.equal(
@@ -198,23 +199,27 @@ describe("FullFlow Integration", function () {
     });
 
     it("should handle multiple withdraw cycles", async function () {
-      const { nft, splitter, agentAccount, founder1, user1 } =
-        await loadFixture(deployFullSystem);
+      const { nft, splitter, agentAccount } = await loadFixture(deployFullSystem);
 
-      await nft.setMintActive(true);
+      await nft.setPhase(2); // Public
+      const signers = await ethers.getSigners();
 
-      // First batch: 5 mints
-      await nft.connect(user1).mint(5, { value: MINT_PRICE * 5n });
+      // First batch: 5 fresh wallets each mint 1
+      for (let i = 8; i < 13; i++) {
+        await nft.connect(signers[i]).publicMint({ value: MINT_PRICE });
+      }
       await nft.withdraw();
       await splitter.releaseAll();
 
-      // Second batch: 3 mints
-      await nft.connect(user1).mint(3, { value: MINT_PRICE * 3n });
+      // Second batch: 3 more fresh wallets
+      for (let i = 13; i < 16; i++) {
+        await nft.connect(signers[i]).publicMint({ value: MINT_PRICE });
+      }
       await nft.withdraw();
 
-      // Agent should have pending from second batch
+      // Agent should have pending from second batch (0.03 → 50% = 0.015)
       expect(await splitter.pendingPayment(await agentAccount.getAddress())).to.equal(
-        ethers.parseEther("0.015") // 50% of 0.03
+        ethers.parseEther("0.015")
       );
     });
   });
@@ -223,12 +228,15 @@ describe("FullFlow Integration", function () {
 
   describe("Agent Spending", function () {
     it("should allow agent to spend within limits", async function () {
-      const { nft, splitter, agentAccount, deployer, kolTarget, user1 } =
+      const { nft, splitter, agentAccount, deployer, kolTarget } =
         await loadFixture(deployFullSystem);
 
-      // Fund agent: mint 100 NFTs → withdraw → release → 0.5 ETH + extra funding
-      await nft.setMintActive(true);
-      await nft.connect(user1).mint(20, { value: MINT_PRICE * 20n });
+      // Fund agent via public mints from 10 fresh wallets → 0.1 ETH → 50% = 0.05 ETH
+      await nft.setPhase(2);
+      const signers = await ethers.getSigners();
+      for (let i = 8; i < 18; i++) {
+        await nft.connect(signers[i]).publicMint({ value: MINT_PRICE });
+      }
       await nft.withdraw();
       await splitter.releaseAll();
 
@@ -318,27 +326,30 @@ describe("FullFlow Integration", function () {
       } = await loadFixture(deployFullSystem);
 
       // ── 1. PUBLIC MINT ────────────────────────────────────────
-      await nft.setMintActive(true);
-      await nft.connect(user1).mint(10, { value: MINT_PRICE * 10n });
-      await nft.connect(user2).mint(5, { value: MINT_PRICE * 5n });
+      await nft.setPhase(2); // Public
+      // 10 fresh wallets each mint 1 NFT (signers 8..17 free)
+      const signers = await ethers.getSigners();
+      for (let i = 8; i < 18; i++) {
+        await nft.connect(signers[i]).publicMint({ value: MINT_PRICE });
+      }
 
-      // Total: 15 * 0.01 = 0.15 ETH
-      // + token #0 from owner = 16 total minted (includes agent's NFT)
-      expect(await nft.totalMinted()).to.equal(16);
-      expect(await nft.totalSupply()).to.equal(16);
+      // Total: 10 * 0.01 = 0.1 ETH
+      // + token #0 from reservedMint = 11 total (includes agent's NFT)
+      expect(await nft.totalMinted()).to.equal(11);
+      expect(await nft.totalSupply()).to.equal(11);
 
       // ── 2. WITHDRAW & SPLIT ───────────────────────────────────
       await nft.withdraw();
       const splitterBal = await ethers.provider.getBalance(await splitter.getAddress());
-      expect(splitterBal).to.equal(ethers.parseEther("0.15"));
+      expect(splitterBal).to.equal(ethers.parseEther("0.1"));
 
       // Release to all payees
       const agentBefore = await ethers.provider.getBalance(await agentAccount.getAddress());
       await splitter.releaseAll();
       const agentAfter = await ethers.provider.getBalance(await agentAccount.getAddress());
 
-      // Agent gets 50% = 0.075 ETH
-      expect(agentAfter - agentBefore).to.equal(ethers.parseEther("0.075"));
+      // Agent gets 50% = 0.05 ETH
+      expect(agentAfter - agentBefore).to.equal(ethers.parseEther("0.05"));
 
       // ── 3. TOP UP AGENT (simulate more revenue) ───────────────
       await deployer.sendTransaction({
@@ -371,10 +382,9 @@ describe("FullFlow Integration", function () {
       expect(info.verified).to.be.true;
 
       // ── 6. VERIFY FINAL STATE ─────────────────────────────────
-      // NFT holders
-      expect(await nft.balanceOf(user1.address)).to.equal(10);
-      expect(await nft.balanceOf(user2.address)).to.equal(5);
+      // NFT holders — 10 distinct FCFS minters + deployer's agent NFT
       expect(await nft.balanceOf(deployer.address)).to.equal(1); // Agent's NFT
+      expect(await nft.fcfsMinted()).to.equal(10);
 
       // Agent state incremented
       expect(await agentAccount.state()).to.equal(1);

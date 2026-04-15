@@ -17,7 +17,7 @@ async function deployAgentAccount() {
   await mockNFT.waitForDeployment();
 
   // Mint token #0 to nftOwner
-  await mockNFT.ownerMint(nftOwner.address, 1);
+  await mockNFT.reservedMint(nftOwner.address, 1);
   expect(await mockNFT.ownerOf(0)).to.equal(nftOwner.address);
 
   // Deploy AgentAccount bound to token #0
@@ -213,7 +213,7 @@ describe("AgentAccount", function () {
       const AgentAccount = await ethers.getContractFactory("AgentAccount");
       const mockNFT = await ethers.getContractFactory("AgentNFT");
       const nft = await mockNFT.deploy("Test2", "TST2", 1, 500);
-      await nft.ownerMint(nftOwner.address, 1);
+      await nft.reservedMint(nftOwner.address, 1);
 
       const account2 = await AgentAccount.deploy(
         31337n,
@@ -462,7 +462,7 @@ describe("AgentAccount", function () {
       const AgentAccount = await ethers.getContractFactory("AgentAccount");
       const mockNFT = await ethers.getContractFactory("AgentNFT");
       const nft = await mockNFT.deploy("T", "T", 1, 500);
-      await nft.ownerMint(nftOwner.address, 1);
+      await nft.reservedMint(nftOwner.address, 1);
 
       const acc = await AgentAccount.deploy(
         31337n, await nft.getAddress(), 0n,
