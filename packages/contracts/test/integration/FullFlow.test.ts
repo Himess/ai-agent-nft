@@ -2,12 +2,17 @@ import { expect } from "chai";
 import { ethers } from "hardhat";
 import { loadFixture, time } from "@nomicfoundation/hardhat-network-helpers";
 
-const MINT_PRICE = ethers.parseEther("0.01");
-const ROYALTY_BPS = 500n; // 5%
+const MAX_SUPPLY = 888n;
+const ROYALTY_BPS = 500; // 5%
 const MAX_PER_TX = ethers.parseEther("0.1");
 const MAX_DAILY = ethers.parseEther("0.3");
 const MIN_BALANCE = ethers.parseEther("4");
 const MULTISIG_THRESHOLD = ethers.parseEther("1");
+
+// Canonical cross-chain SeaDrop address. Not deployed on the hardhat network,
+// so our unit tests only use it to seed the constructor — no mints actually
+// route through SeaDrop in this file.
+const SEADROP_PLACEHOLDER = "0x00005EA00Ac477B1030CE78506496e8C2dE24bf5";
 
 const WL_TAG = ethers.keccak256(ethers.toUtf8Bytes("wl_decision"));
 const OUTREACH_TAG = ethers.keccak256(ethers.toUtf8Bytes("outreach"));
@@ -21,21 +26,23 @@ async function deployFullSystem() {
   const identity = await AgentIdentity.deploy();
   await identity.waitForDeployment();
 
-  // ── Step 2: Deploy AgentNFT (splitter not set yet) ────────────
+  // ── Step 2: Deploy AgentNFT (SeaDrop-aware ERC721A) ───────────
   const AgentNFT = await ethers.getContractFactory("AgentNFT");
-  const nft = await AgentNFT.deploy("SURVIVORS", "SVVR", MINT_PRICE, ROYALTY_BPS);
+  const nft = await AgentNFT.deploy("SURVIVORS", "SVVR", [SEADROP_PLACEHOLDER]);
   await nft.waitForDeployment();
+  await nft.setMaxSupply(MAX_SUPPLY);
 
-  // ── Step 3: Owner mints token #0 (the Agent's NFT — vault seat) ──
+  // ── Step 3: Owner mints the Agent's NFT (token #1, first ERC721A id) ──
   await nft.reservedMint(deployer.address, 1);
-  expect(await nft.ownerOf(0)).to.equal(deployer.address);
+  expect(await nft.ownerOf(1)).to.equal(deployer.address);
+  const AGENT_TOKEN_ID = 1n;
 
-  // ── Step 4: Deploy AgentAccount (TBA) bound to token #0 ──────
+  // ── Step 4: Deploy AgentAccount (TBA) bound to the agent NFT ──
   const AgentAccount = await ethers.getContractFactory("AgentAccount");
   const agentAccount = await AgentAccount.deploy(
     31337n,
     await nft.getAddress(),
-    0n,
+    AGENT_TOKEN_ID,
     MAX_PER_TX,
     MAX_DAILY,
     MIN_BALANCE,
@@ -52,8 +59,11 @@ async function deployFullSystem() {
   );
   await splitter.waitForDeployment();
 
-  // ── Step 6: Configure AgentNFT with splitter ──────────────────
-  await nft.setRevenueSplitter(await splitter.getAddress(), ROYALTY_BPS);
+  // ── Step 6: Point royalty receiver at the splitter (ERC-2981 secondary-sale share) ──
+  await nft.setRoyaltyInfo({
+    royaltyAddress: await splitter.getAddress(),
+    royaltyBps: ROYALTY_BPS,
+  });
 
   // ── Step 7: Configure AgentAccount ────────────────────────────
   await agentAccount.addApprovedTarget(kolTarget.address);
@@ -83,6 +93,7 @@ async function deployFullSystem() {
     kolTarget,
     collabTarget,
     agentId,
+    AGENT_TOKEN_ID,
   };
 }
 
@@ -100,24 +111,19 @@ describe("FullFlow Integration", function () {
       expect(await identity.getAddress()).to.be.properAddress;
     });
 
-    it("should link NFT to splitter", async function () {
+    it("should set splitter as ERC-2981 royalty receiver", async function () {
       const { nft, splitter } = await loadFixture(deployFullSystem);
-      expect(await nft.revenueSplitter()).to.equal(await splitter.getAddress());
-    });
-
-    it("should set splitter as royalty receiver", async function () {
-      const { nft, splitter } = await loadFixture(deployFullSystem);
-      const [receiver, amount] = await nft.royaltyInfo(0, ethers.parseEther("1"));
+      const [receiver, amount] = await nft.royaltyInfo(1, ethers.parseEther("1"));
       expect(receiver).to.equal(await splitter.getAddress());
       expect(amount).to.equal(ethers.parseEther("0.05")); // 5%
     });
 
-    it("should bind agent account to token #0", async function () {
+    it("should bind agent account to token #1", async function () {
       const { nft, agentAccount } = await loadFixture(deployFullSystem);
       const [chainId, tokenContract, tokenId] = await agentAccount.token();
       expect(chainId).to.equal(31337n);
       expect(tokenContract).to.equal(await nft.getAddress());
-      expect(tokenId).to.equal(0n);
+      expect(tokenId).to.equal(1n);
     });
 
     it("should register and verify agent identity", async function () {
@@ -146,78 +152,62 @@ describe("FullFlow Integration", function () {
     });
   });
 
-  // ─── Mint → Split Flow ───────────────────────────────────────────
+  // ─── Split Flow (revenue arriving directly — SeaDrop would do this in prod) ──
 
-  describe("Mint → Revenue Split", function () {
-    it("should split mint revenue correctly (50/20/30)", async function () {
-      const { nft, splitter, agentAccount, founder1, founder2 } =
+  describe("Revenue Split", function () {
+    it("should route ETH sent to splitter into the 50/20/30 split", async function () {
+      const { splitter, agentAccount, founder1, founder2, deployer } =
         await loadFixture(deployFullSystem);
 
-      // Enable public mint
-      await nft.setPhase(3); // Public
+      // Simulate SeaDrop's creator payout forwarding 0.1 ETH to the splitter.
+      await deployer.sendTransaction({
+        to: await splitter.getAddress(),
+        value: ethers.parseEther("0.1"),
+      });
 
-      // 10 fresh signers each mint 1 NFT (signers 8..17 are free)
-      const signers = await ethers.getSigners();
-      for (let i = 8; i < 18; i++) {
-        await nft.connect(signers[i]).publicMint({ value: MINT_PRICE });
-      }
-
-      // Total: 10 * 0.01 ETH = 0.1 ETH in NFT contract
-      expect(await ethers.provider.getBalance(await nft.getAddress())).to.equal(
-        ethers.parseEther("0.1")
+      expect(await splitter.pendingPayment(await agentAccount.getAddress())).to.equal(
+        ethers.parseEther("0.05")
+      );
+      expect(await splitter.pendingPayment(founder1.address)).to.equal(
+        ethers.parseEther("0.02")
+      );
+      expect(await splitter.pendingPayment(founder2.address)).to.equal(
+        ethers.parseEther("0.03")
       );
 
-      // Withdraw to splitter
-      await nft.withdraw();
-      expect(await ethers.provider.getBalance(await splitter.getAddress())).to.equal(
-        ethers.parseEther("0.1")
+      const agentBefore = await ethers.provider.getBalance(
+        await agentAccount.getAddress()
       );
-
-      // Check pending amounts
-      const agentPending = await splitter.pendingPayment(await agentAccount.getAddress());
-      const f1Pending = await splitter.pendingPayment(founder1.address);
-      const f2Pending = await splitter.pendingPayment(founder2.address);
-
-      expect(agentPending).to.equal(ethers.parseEther("0.05"));  // 50%
-      expect(f1Pending).to.equal(ethers.parseEther("0.02"));     // 20%
-      expect(f2Pending).to.equal(ethers.parseEther("0.03"));     // 30%
-
-      // Release all
-      const agentBalBefore = await ethers.provider.getBalance(await agentAccount.getAddress());
-      const f1BalBefore = await ethers.provider.getBalance(founder1.address);
-      const f2BalBefore = await ethers.provider.getBalance(founder2.address);
+      const f1Before = await ethers.provider.getBalance(founder1.address);
+      const f2Before = await ethers.provider.getBalance(founder2.address);
 
       await splitter.releaseAll();
 
-      const agentBalAfter = await ethers.provider.getBalance(await agentAccount.getAddress());
-      const f1BalAfter = await ethers.provider.getBalance(founder1.address);
-      const f2BalAfter = await ethers.provider.getBalance(founder2.address);
-
-      expect(agentBalAfter - agentBalBefore).to.equal(ethers.parseEther("0.05"));
-      expect(f1BalAfter - f1BalBefore).to.equal(ethers.parseEther("0.02"));
-      expect(f2BalAfter - f2BalBefore).to.equal(ethers.parseEther("0.03"));
+      expect(
+        (await ethers.provider.getBalance(await agentAccount.getAddress())) -
+          agentBefore
+      ).to.equal(ethers.parseEther("0.05"));
+      expect(
+        (await ethers.provider.getBalance(founder1.address)) - f1Before
+      ).to.equal(ethers.parseEther("0.02"));
+      expect(
+        (await ethers.provider.getBalance(founder2.address)) - f2Before
+      ).to.equal(ethers.parseEther("0.03"));
     });
 
-    it("should handle multiple withdraw cycles", async function () {
-      const { nft, splitter, agentAccount } = await loadFixture(deployFullSystem);
+    it("should handle multiple fundings", async function () {
+      const { splitter, agentAccount, deployer } = await loadFixture(deployFullSystem);
 
-      await nft.setPhase(3); // Public
-      const signers = await ethers.getSigners();
-
-      // First batch: 5 fresh wallets each mint 1
-      for (let i = 8; i < 13; i++) {
-        await nft.connect(signers[i]).publicMint({ value: MINT_PRICE });
-      }
-      await nft.withdraw();
+      await deployer.sendTransaction({
+        to: await splitter.getAddress(),
+        value: ethers.parseEther("0.05"),
+      });
       await splitter.releaseAll();
 
-      // Second batch: 3 more fresh wallets
-      for (let i = 13; i < 16; i++) {
-        await nft.connect(signers[i]).publicMint({ value: MINT_PRICE });
-      }
-      await nft.withdraw();
-
-      // Agent should have pending from second batch (0.03 → 50% = 0.015)
+      await deployer.sendTransaction({
+        to: await splitter.getAddress(),
+        value: ethers.parseEther("0.03"),
+      });
       expect(await splitter.pendingPayment(await agentAccount.getAddress())).to.equal(
         ethers.parseEther("0.015")
       );
@@ -228,25 +218,14 @@ describe("FullFlow Integration", function () {
 
   describe("Agent Spending", function () {
     it("should allow agent to spend within limits", async function () {
-      const { nft, splitter, agentAccount, deployer, kolTarget } =
+      const { agentAccount, deployer, kolTarget } =
         await loadFixture(deployFullSystem);
 
-      // Fund agent via public mints from 10 fresh wallets → 0.1 ETH → 50% = 0.05 ETH
-      await nft.setPhase(3);
-      const signers = await ethers.getSigners();
-      for (let i = 8; i < 18; i++) {
-        await nft.connect(signers[i]).publicMint({ value: MINT_PRICE });
-      }
-      await nft.withdraw();
-      await splitter.releaseAll();
-
-      // Top up agent to 10 ETH for testing
       await deployer.sendTransaction({
         to: await agentAccount.getAddress(),
         value: ethers.parseEther("10"),
       });
 
-      // Agent pays KOL 0.05 ETH
       const kolBefore = await ethers.provider.getBalance(kolTarget.address);
       await agentAccount.execute(kolTarget.address, ethers.parseEther("0.05"), "0x", 0);
       const kolAfter = await ethers.provider.getBalance(kolTarget.address);
@@ -258,23 +237,19 @@ describe("FullFlow Integration", function () {
       const { agentAccount, deployer, kolTarget, collabTarget } =
         await loadFixture(deployFullSystem);
 
-      // Fund agent
       await deployer.sendTransaction({
         to: await agentAccount.getAddress(),
         value: ethers.parseEther("10"),
       });
 
-      // Spend 0.1 + 0.1 + 0.1 = 0.3 ETH (daily limit)
       await agentAccount.execute(kolTarget.address, ethers.parseEther("0.1"), "0x", 0);
       await agentAccount.execute(collabTarget.address, ethers.parseEther("0.1"), "0x", 0);
       await agentAccount.execute(kolTarget.address, ethers.parseEther("0.1"), "0x", 0);
 
-      // Next tx should fail (daily limit reached)
       await expect(
         agentAccount.execute(kolTarget.address, ethers.parseEther("0.01"), "0x", 0)
       ).to.be.revertedWithCustomError(agentAccount, "ExceedsDailyLimit");
 
-      // Next day: should work again
       await time.increase(86400);
       await agentAccount.execute(kolTarget.address, ethers.parseEther("0.05"), "0x", 0);
     });
@@ -286,18 +261,14 @@ describe("FullFlow Integration", function () {
     it("should record agent decisions on-chain", async function () {
       const { identity, agentId } = await loadFixture(deployFullSystem);
 
-      // Record WL decisions
       await identity.updateReputation(agentId, 90, WL_TAG, "Approved user1 — strong on-chain history");
       await identity.updateReputation(agentId, 30, WL_TAG, "Rejected user2 — bot pattern detected");
       await identity.updateReputation(agentId, 85, OUTREACH_TAG, "Collab with Project X accepted");
 
       const info = await identity.getAgentInfo(agentId);
       expect(info.totalDecisions).to.equal(3);
-      // Average: (90 + 30 + 85) / 3 ≈ 68 (integer division: (90*1+30)/2=60, (60*2+85)/3=68)
-      // Actually: first=90, second=(90+30)/2=60, third=(60*2+85)/3=68
       expect(info.reputationScore).to.equal(68n);
 
-      // Verify history
       const history = await identity.getReputationHistory(agentId, 0, 10);
       expect(history.length).to.equal(3);
       expect(history[0].score).to.equal(90);
@@ -310,54 +281,38 @@ describe("FullFlow Integration", function () {
   // ─── Full Lifecycle ──────────────────────────────────────────────
 
   describe("Full Lifecycle", function () {
-    it("mint → split → fund agent → agent spends → reputation logged", async function () {
+    it("fund splitter → agent is paid → agent spends → reputation logged", async function () {
       const {
-        nft,
         splitter,
         agentAccount,
         identity,
         deployer,
-        founder1,
-        founder2,
-        user1,
-        user2,
         kolTarget,
         agentId,
       } = await loadFixture(deployFullSystem);
 
-      // ── 1. PUBLIC MINT ────────────────────────────────────────
-      await nft.setPhase(3); // Public
-      // 10 fresh wallets each mint 1 NFT (signers 8..17 free)
-      const signers = await ethers.getSigners();
-      for (let i = 8; i < 18; i++) {
-        await nft.connect(signers[i]).publicMint({ value: MINT_PRICE });
-      }
+      // ── 1. Simulate mint revenue arriving at the splitter ─────
+      await deployer.sendTransaction({
+        to: await splitter.getAddress(),
+        value: ethers.parseEther("0.1"),
+      });
 
-      // Total: 10 * 0.01 = 0.1 ETH
-      // + token #0 from reservedMint = 11 total (includes agent's NFT)
-      expect(await nft.totalMinted()).to.equal(11);
-      expect(await nft.totalSupply()).to.equal(11);
-
-      // ── 2. WITHDRAW & SPLIT ───────────────────────────────────
-      await nft.withdraw();
-      const splitterBal = await ethers.provider.getBalance(await splitter.getAddress());
-      expect(splitterBal).to.equal(ethers.parseEther("0.1"));
-
-      // Release to all payees
-      const agentBefore = await ethers.provider.getBalance(await agentAccount.getAddress());
+      const agentBefore = await ethers.provider.getBalance(
+        await agentAccount.getAddress()
+      );
       await splitter.releaseAll();
-      const agentAfter = await ethers.provider.getBalance(await agentAccount.getAddress());
-
-      // Agent gets 50% = 0.05 ETH
+      const agentAfter = await ethers.provider.getBalance(
+        await agentAccount.getAddress()
+      );
       expect(agentAfter - agentBefore).to.equal(ethers.parseEther("0.05"));
 
-      // ── 3. TOP UP AGENT (simulate more revenue) ───────────────
+      // ── 2. Top up for spending test ───────────────────────────
       await deployer.sendTransaction({
         to: await agentAccount.getAddress(),
         value: ethers.parseEther("10"),
       });
 
-      // ── 4. AGENT SPENDS ON KOL ────────────────────────────────
+      // ── 3. Agent spends on KOL ────────────────────────────────
       const kolBefore = await ethers.provider.getBalance(kolTarget.address);
       await agentAccount.execute(
         kolTarget.address,
@@ -368,7 +323,7 @@ describe("FullFlow Integration", function () {
       const kolAfterPay = await ethers.provider.getBalance(kolTarget.address);
       expect(kolAfterPay - kolBefore).to.equal(ethers.parseEther("0.08"));
 
-      // ── 5. LOG REPUTATION ─────────────────────────────────────
+      // ── 4. Log reputation ─────────────────────────────────────
       await identity.updateReputation(
         agentId,
         92,
@@ -381,15 +336,8 @@ describe("FullFlow Integration", function () {
       expect(info.reputationScore).to.equal(92);
       expect(info.verified).to.be.true;
 
-      // ── 6. VERIFY FINAL STATE ─────────────────────────────────
-      // NFT holders — 10 distinct public minters + deployer's agent NFT
-      expect(await nft.balanceOf(deployer.address)).to.equal(1); // Agent's NFT
-      expect(await nft.publicMinted()).to.equal(10);
-
-      // Agent state incremented
+      // ── 5. State assertions ───────────────────────────────────
       expect(await agentAccount.state()).to.equal(1);
-
-      // Daily budget consumed
       expect(await agentAccount.dailySpent()).to.equal(ethers.parseEther("0.08"));
       expect(await agentAccount.getRemainingDailyBudget()).to.equal(
         ethers.parseEther("0.22")
@@ -400,13 +348,6 @@ describe("FullFlow Integration", function () {
   // ─── Edge Cases ──────────────────────────────────────────────────
 
   describe("Edge Cases", function () {
-    it("should prevent splitter from being changed after initial set", async function () {
-      const { nft, founder1 } = await loadFixture(deployFullSystem);
-      await expect(
-        nft.setRevenueSplitter(founder1.address, ROYALTY_BPS)
-      ).to.be.revertedWithCustomError(nft, "SplitterAlreadySet");
-    });
-
     it("should prevent non-owner from spending agent funds", async function () {
       const { agentAccount, user1, kolTarget, deployer } =
         await loadFixture(deployFullSystem);
@@ -424,13 +365,11 @@ describe("FullFlow Integration", function () {
     it("should protect minimum balance", async function () {
       const { agentAccount, deployer, kolTarget } = await loadFixture(deployFullSystem);
 
-      // Fund with exactly 4.05 ETH
       await deployer.sendTransaction({
         to: await agentAccount.getAddress(),
         value: ethers.parseEther("4.05"),
       });
 
-      // Try to spend 0.1 → would leave 3.95 < 4 ETH min
       await expect(
         agentAccount.execute(kolTarget.address, ethers.parseEther("0.1"), "0x", 0)
       ).to.be.revertedWithCustomError(agentAccount, "BelowMinBalance");
@@ -444,7 +383,6 @@ describe("FullFlow Integration", function () {
         value: ethers.parseEther("10"),
       });
 
-      // user1 is not an approved target
       await expect(
         agentAccount.execute(user1.address, ethers.parseEther("0.01"), "0x", 0)
       ).to.be.revertedWithCustomError(agentAccount, "TargetNotApproved");

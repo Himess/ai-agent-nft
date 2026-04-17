@@ -1,8 +1,16 @@
 import { ethers } from "hardhat";
 
+// Canonical cross-chain SeaDrop address (mainnet + Sepolia).
+const SEADROP_ADDRESS = "0x00005EA00Ac477B1030CE78506496e8C2dE24bf5";
+
+// OpenSea's official fee recipient (must be explicitly allowed before OpenSea
+// can collect its 10% primary-mint fee).
+const OS_FEE_RECIPIENT = "0x0000a26b00c1F0DF003000390027140000fAa719";
+
 async function main() {
   const [deployer] = await ethers.getSigners();
   const network = await ethers.provider.getNetwork();
+  const isLiveNetwork = network.chainId === 1n || network.chainId === 11155111n;
 
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
   console.log("  SURVIVORS — Full Deployment (agent: The Seventh)");
@@ -13,12 +21,13 @@ async function main() {
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
 
   // ── Config ────────────────────────────────────────────────────
-  const MINT_PRICE = ethers.parseEther("0.01");
-  const ROYALTY_BPS = 500n; // 5%
+  const MAX_SUPPLY = 888n;
+  const ROYALTY_BPS = 500; // 5%
   const MAX_PER_TX = ethers.parseEther("0.1");
   const MAX_DAILY = ethers.parseEther("0.3");
   const MIN_BALANCE = ethers.parseEther("4");
   const MULTISIG_THRESHOLD = ethers.parseEther("1");
+  const AGENT_TOKEN_ID = 1n; // ERC721A starts token IDs at 1
 
   const FOUNDER1 = process.env.FOUNDER1_ADDRESS;
   const FOUNDER2 = process.env.FOUNDER2_ADDRESS;
@@ -28,32 +37,36 @@ async function main() {
   }
 
   // ── Step 1: Deploy AgentIdentity ──────────────────────────────
-  console.log("1/8  Deploying AgentIdentity...");
+  console.log("1/9  Deploying AgentIdentity...");
   const AgentIdentity = await ethers.getContractFactory("AgentIdentity");
   const identity = await AgentIdentity.deploy();
   await identity.waitForDeployment();
   console.log(`     AgentIdentity: ${await identity.getAddress()}\n`);
 
-  // ── Step 2: Deploy AgentNFT ───────────────────────────────────
-  console.log("2/8  Deploying AgentNFT...");
+  // ── Step 2: Deploy AgentNFT (SeaDrop-aware ERC721A) ───────────
+  console.log("2/9  Deploying AgentNFT (ERC721SeaDrop)...");
   const AgentNFT = await ethers.getContractFactory("AgentNFT");
-  const nft = await AgentNFT.deploy("SURVIVORS", "SVVR", MINT_PRICE, ROYALTY_BPS);
+  const nft = await AgentNFT.deploy("SURVIVORS", "SVVR", [SEADROP_ADDRESS]);
   await nft.waitForDeployment();
   console.log(`     SurvivorsNFT: ${await nft.getAddress()}\n`);
 
-  // ── Step 3: Owner mints token #0 (Agent's NFT, from reserved/vault bucket) ──
-  console.log("3/8  Minting Agent NFT (token #0) — The Seventh vault seat...");
-  const mintTx = await nft.reservedMint(deployer.address, 1);
-  await mintTx.wait();
-  console.log(`     Token #0 minted to ${deployer.address}\n`);
+  // ── Step 3: Set max supply (must happen before any mint) ──────
+  console.log("3/9  Setting max supply to 888...");
+  await (await nft.setMaxSupply(MAX_SUPPLY)).wait();
+  console.log(`     maxSupply = ${MAX_SUPPLY}\n`);
 
-  // ── Step 4: Deploy AgentAccount (TBA) ─────────────────────────
-  console.log("4/8  Deploying AgentAccount (TBA)...");
+  // ── Step 4: Reserved-mint the agent NFT (token #1) ────────────
+  console.log("4/9  Minting Agent NFT (token #1) — The Seventh vault seat...");
+  await (await nft.reservedMint(deployer.address, 1)).wait();
+  console.log(`     Token #1 minted to ${deployer.address}\n`);
+
+  // ── Step 5: Deploy AgentAccount (TBA bound to token #1) ───────
+  console.log("5/9  Deploying AgentAccount (TBA)...");
   const AgentAccount = await ethers.getContractFactory("AgentAccount");
   const agentAccount = await AgentAccount.deploy(
     network.chainId,
     await nft.getAddress(),
-    0n,
+    AGENT_TOKEN_ID,
     MAX_PER_TX,
     MAX_DAILY,
     MIN_BALANCE,
@@ -62,8 +75,8 @@ async function main() {
   await agentAccount.waitForDeployment();
   console.log(`     AgentAccount: ${await agentAccount.getAddress()}\n`);
 
-  // ── Step 5: Deploy RevenueSplitter ────────────────────────────
-  console.log("5/8  Deploying RevenueSplitter...");
+  // ── Step 6: Deploy RevenueSplitter ────────────────────────────
+  console.log("6/9  Deploying RevenueSplitter...");
   const RevenueSplitter = await ethers.getContractFactory("RevenueSplitter");
   const splitter = await RevenueSplitter.deploy(
     await agentAccount.getAddress(),
@@ -76,30 +89,44 @@ async function main() {
   console.log(`       Founder1  (20%): ${FOUNDER1}`);
   console.log(`       Founder2  (30%): ${FOUNDER2}\n`);
 
-  // ── Step 6: Configure AgentNFT ────────────────────────────────
-  console.log("6/8  Configuring AgentNFT (setting splitter + royalty)...");
-  const configTx = await nft.setRevenueSplitter(await splitter.getAddress(), ROYALTY_BPS);
-  await configTx.wait();
-  console.log(`     RevenueSplitter set on AgentNFT\n`);
+  // ── Step 7: Wire royalty (ERC-2981, secondary-sale share) ─────
+  console.log("7/9  Setting royalty receiver to RevenueSplitter (5%)...");
+  await (
+    await nft.setRoyaltyInfo({
+      royaltyAddress: await splitter.getAddress(),
+      royaltyBps: ROYALTY_BPS,
+    })
+  ).wait();
+  console.log(`     Royalty receiver = ${await splitter.getAddress()}\n`);
 
-  // ── Step 7: Register Agent Identity ───────────────────────────
-  console.log("7/8  Registering Agent Identity...");
-  const registerTx = await identity.registerAgent(
-    "The Seventh",
-    "ipfs://TODO", // Replace with actual IPFS URI
-    await agentAccount.getAddress()
-  );
-  await registerTx.wait();
+  // ── Step 8: SeaDrop bootstrap (only on live networks) ─────────
+  if (isLiveNetwork) {
+    console.log("8/9  Bootstrapping SeaDrop (payout + fee recipient)...");
+    await (
+      await nft.updateCreatorPayoutAddress(SEADROP_ADDRESS, await splitter.getAddress())
+    ).wait();
+    console.log(`     creatorPayoutAddress = ${await splitter.getAddress()}`);
 
-  const verifyTx = await identity.verifyAgent(0);
-  await verifyTx.wait();
-  console.log(`     Agent registered (id: 0) and verified\n`);
+    await (
+      await nft.updateAllowedFeeRecipient(SEADROP_ADDRESS, OS_FEE_RECIPIENT, true)
+    ).wait();
+    console.log(`     allowed fee recipient = ${OS_FEE_RECIPIENT}\n`);
+  } else {
+    console.log(`8/9  Skipping SeaDrop bootstrap (network ${network.chainId} has no canonical SeaDrop deployment)\n`);
+  }
 
-  // ── Step 8: Add agent TBA as authorized reputation updater ────
-  console.log("8/8  Adding deployer as authorized reputation updater...");
-  const authTx = await identity.addAuthorizedUpdater(deployer.address);
-  await authTx.wait();
-  console.log(`     ${deployer.address} authorized\n`);
+  // ── Step 9: Register + verify agent identity ──────────────────
+  console.log("9/9  Registering Agent Identity...");
+  await (
+    await identity.registerAgent(
+      "The Seventh",
+      "ipfs://TODO", // Replace with actual IPFS URI
+      await agentAccount.getAddress()
+    )
+  ).wait();
+  await (await identity.verifyAgent(0)).wait();
+  await (await identity.addAuthorizedUpdater(deployer.address)).wait();
+  console.log(`     Agent registered (id: 0), verified, deployer authorized\n`);
 
   // ── Summary ───────────────────────────────────────────────────
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
@@ -110,15 +137,14 @@ async function main() {
   console.log(`  AgentAccount:     ${await agentAccount.getAddress()}`);
   console.log(`  AgentIdentity:    ${await identity.getAddress()}`);
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-  console.log("\nNext steps:");
+  console.log("\nNext steps (via SeaDrop admin):");
   console.log("  1. Verify contracts on Etherscan");
   console.log("  2. Configure approved targets on AgentAccount");
-  console.log("  3. Set base URI on SurvivorsNFT");
-  console.log("  4. Set GTD Merkle root:  nft.setGTDMerkleRoot(rootGTD)");
-  console.log("  5. Open GTD phase:       nft.setPhase(1)  // GTD");
-  console.log("  6. Set FCFS Merkle root: nft.setFCFSMerkleRoot(rootFCFS)");
-  console.log("  7. Open FCFS phase:      nft.setPhase(2)  // FCFS");
-  console.log("  8. Open Public phase:    nft.setPhase(3)  // Public");
+  console.log("  3. Set base URI + contractURI on SurvivorsNFT");
+  console.log("  4. Set GTD allow list:   nft.updateAllowList(seadrop, AllowListData{gtd})");
+  console.log("  5. Set FCFS allow list:  nft.updateAllowList(seadrop, AllowListData{fcfs})  // stage 2");
+  console.log("  6. Set public drop:      nft.updatePublicDrop(seadrop, PublicDrop{...})");
+  console.log("  7. Set drop URI (OpenSea Studio metadata): nft.updateDropURI(seadrop, uri)");
 }
 
 main().catch((error) => {

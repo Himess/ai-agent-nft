@@ -6,7 +6,9 @@
     "compile": "hardhat compile",
     "test": "hardhat test test/AgentAccount.test.ts test/AgentIdentity.test.ts test/AgentNFT.test.ts test/RevenueSplitter.test.ts test/integration/FullFlow.test.ts",
     "coverage": "hardhat coverage",
-    "clean": "hardhat clean"
+    "clean": "hardhat clean",
+    "setup:seadrop": "node scripts/setup-seadrop.js",
+    "postinstall": "node scripts/setup-seadrop.js"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",

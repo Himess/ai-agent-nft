@@ -1,0 +1,3 @@
+[submodule "packages/contracts/lib/seadrop"]
+	path = packages/contracts/lib/seadrop
+	url = https://github.com/ProjectOpenSea/seadrop.git

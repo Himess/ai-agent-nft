@@ -13,19 +13,22 @@ async function deployAgentAccount() {
 
   // Deploy a mock ERC-721 to simulate the NFT ownership
   const MockNFT = await ethers.getContractFactory("AgentNFT");
-  const mockNFT = await MockNFT.deploy("Test", "TST", ethers.parseEther("0.01"), 500);
+  const mockNFT = await MockNFT.deploy("Test", "TST", [
+    "0x00005EA00Ac477B1030CE78506496e8C2dE24bf5", // canonical SeaDrop placeholder
+  ]);
   await mockNFT.waitForDeployment();
+  await mockNFT.setMaxSupply(888);
 
-  // Mint token #0 to nftOwner
+  // Mint token #1 to nftOwner (ERC721A token IDs start at 1)
   await mockNFT.reservedMint(nftOwner.address, 1);
-  expect(await mockNFT.ownerOf(0)).to.equal(nftOwner.address);
+  expect(await mockNFT.ownerOf(1)).to.equal(nftOwner.address);
 
-  // Deploy AgentAccount bound to token #0
+  // Deploy AgentAccount bound to token #1
   const AgentAccount = await ethers.getContractFactory("AgentAccount");
   const account = await AgentAccount.deploy(
     31337n, // hardhat chainId
     await mockNFT.getAddress(),
-    0n, // tokenId
+    1n, // tokenId
     MAX_PER_TX,
     MAX_DAILY,
     MIN_BALANCE,
@@ -54,7 +57,7 @@ describe("AgentAccount", function () {
       const [chainId, tokenContract, tokenId] = await account.token();
       expect(chainId).to.equal(31337n);
       expect(tokenContract).to.equal(await mockNFT.getAddress());
-      expect(tokenId).to.equal(0n);
+      expect(tokenId).to.equal(1n);
     });
 
     it("should set correct spending limits", async function () {
@@ -212,13 +215,16 @@ describe("AgentAccount", function () {
       // Let's create a new account with just 4.05 ETH to test min balance
       const AgentAccount = await ethers.getContractFactory("AgentAccount");
       const mockNFT = await ethers.getContractFactory("AgentNFT");
-      const nft = await mockNFT.deploy("Test2", "TST2", 1, 500);
+      const nft = await mockNFT.deploy("Test2", "TST2", [
+        "0x00005EA00Ac477B1030CE78506496e8C2dE24bf5",
+      ]);
+      await nft.setMaxSupply(888);
       await nft.reservedMint(nftOwner.address, 1);
 
       const account2 = await AgentAccount.deploy(
         31337n,
         await nft.getAddress(),
-        0n,
+        1n,
         MAX_PER_TX,
         MAX_DAILY,
         MIN_BALANCE,
@@ -461,11 +467,14 @@ describe("AgentAccount", function () {
       // Create account with low balance
       const AgentAccount = await ethers.getContractFactory("AgentAccount");
       const mockNFT = await ethers.getContractFactory("AgentNFT");
-      const nft = await mockNFT.deploy("T", "T", 1, 500);
+      const nft = await mockNFT.deploy("T", "T", [
+        "0x00005EA00Ac477B1030CE78506496e8C2dE24bf5",
+      ]);
+      await nft.setMaxSupply(888);
       await nft.reservedMint(nftOwner.address, 1);
 
       const acc = await AgentAccount.deploy(
-        31337n, await nft.getAddress(), 0n,
+        31337n, await nft.getAddress(), 1n,
         MAX_PER_TX, MAX_DAILY, MIN_BALANCE, MULTISIG_THRESHOLD
       );
 
