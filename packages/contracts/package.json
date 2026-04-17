@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "compile": "hardhat compile",
-    "test": "hardhat test test/AgentAccount.test.ts test/AgentIdentity.test.ts test/AgentNFT.test.ts test/RevenueSplitter.test.ts test/integration/FullFlow.test.ts",
+    "test": "hardhat test test/AgentAccount.test.ts test/AgentIdentity.test.ts test/AgentNFT.test.ts test/RevenueSplitter.test.ts test/integration/FullFlow.test.ts test/integration/SeadropForked.test.ts",
     "coverage": "hardhat coverage",
     "clean": "hardhat clean",
     "setup:seadrop": "node scripts/setup-seadrop.js",
