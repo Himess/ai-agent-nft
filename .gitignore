@@ -12,3 +12,4 @@ coverage.json
 *.db
 .DS_Store
 ignition/deployments/
+NFT/
