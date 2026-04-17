@@ -10,30 +10,27 @@ import {MerkleProof} from "@openzeppelin/contracts/utils/cryptography/MerkleProo
 import {IAgentNFT} from "./interfaces/IAgentNFT.sol";
 
 /// @title SurvivorsNFT — SURVIVORS collection, guided by the autonomous agent "The Seventh"
-/// @notice 888 supply ERC-721 + ERC-2981. Allocation: 88 vault / 500 WL / 250 FCFS / 50 team.
-///         Merkle-gated whitelist phase then FCFS public phase; 1 mint per wallet per phase.
+/// @notice 888 supply ERC-721 + ERC-2981. Mint phases: Closed → GTD (merkle) → FCFS (merkle) → Public.
+///         1 mint per wallet per phase. Reserved allocation of 88 for the team vault.
 contract AgentNFT is ERC721, ERC721Enumerable, ERC2981, Ownable, ReentrancyGuard, IAgentNFT {
     uint256 public constant MAX_SUPPLY = 888;
-
-    // Allocation buckets (sum = MAX_SUPPLY)
-    uint256 public constant VAULT_ALLOCATION = 88;   // reserved vault (agent-gated distribution)
-    uint256 public constant WL_ALLOCATION    = 500;  // whitelist application winners
-    uint256 public constant FCFS_ALLOCATION  = 250;  // public first-come-first-served
-    uint256 public constant TEAM_ALLOCATION  = 50;   // team + partners
-    uint256 public constant RESERVED_ALLOCATION = VAULT_ALLOCATION + TEAM_ALLOCATION; // 138
+    uint256 public constant RESERVED_ALLOCATION = 88; // team / vault seats, owner-minted
 
     uint256 public mintPrice;
     address public revenueSplitter;
     Phase public currentPhase;
-    bytes32 public wlMerkleRoot;
+    bytes32 public gtdMerkleRoot;
+    bytes32 public fcfsMerkleRoot;
     string private _baseTokenURI;
     uint256 private _nextTokenId;
 
-    uint256 public wlMinted;
+    uint256 public gtdMinted;
     uint256 public fcfsMinted;
+    uint256 public publicMinted;
     uint256 public reservedMinted;
 
-    mapping(address => bool) public mintedInWL;
+    mapping(address => bool) public mintedInGTD;
+    mapping(address => bool) public mintedInFCFS;
     mapping(address => bool) public mintedInPublic;
 
     constructor(
@@ -48,38 +45,51 @@ contract AgentNFT is ERC721, ERC721Enumerable, ERC2981, Ownable, ReentrancyGuard
 
     // ─── Mint ────────────────────────────────────────────────────────
 
-    /// @notice Merkle-gated whitelist mint. 1 per wallet.
-    function wlMint(bytes32[] calldata proof) external payable nonReentrant {
-        if (currentPhase != Phase.Whitelist) revert WrongPhase();
-        if (wlMerkleRoot == bytes32(0)) revert MerkleRootNotSet();
-        if (mintedInWL[msg.sender]) revert AlreadyMintedInPhase();
-        if (wlMinted >= WL_ALLOCATION) revert ExceedsPhaseAllocation();
+    /// @notice Merkle-gated GTD mint (guaranteed whitelist). 1 per wallet.
+    function gtdMint(bytes32[] calldata proof) external payable nonReentrant {
+        if (currentPhase != Phase.GTD) revert WrongPhase();
+        if (gtdMerkleRoot == bytes32(0)) revert MerkleRootNotSet();
+        if (mintedInGTD[msg.sender]) revert AlreadyMintedInPhase();
         if (msg.value < mintPrice) revert InsufficientPayment();
 
         bytes32 leaf = keccak256(abi.encodePacked(msg.sender));
-        if (!MerkleProof.verifyCalldata(proof, wlMerkleRoot, leaf)) revert InvalidProof();
+        if (!MerkleProof.verifyCalldata(proof, gtdMerkleRoot, leaf)) revert InvalidProof();
 
-        mintedInWL[msg.sender] = true;
-        wlMinted++;
-        _mintOne(msg.sender, Phase.Whitelist);
+        mintedInGTD[msg.sender] = true;
+        gtdMinted++;
+        _mintOne(msg.sender, Phase.GTD);
     }
 
-    /// @notice FCFS public mint. 1 per wallet.
+    /// @notice Merkle-gated FCFS mint (race for remaining supply). 1 per wallet.
+    function fcfsMint(bytes32[] calldata proof) external payable nonReentrant {
+        if (currentPhase != Phase.FCFS) revert WrongPhase();
+        if (fcfsMerkleRoot == bytes32(0)) revert MerkleRootNotSet();
+        if (mintedInFCFS[msg.sender]) revert AlreadyMintedInPhase();
+        if (msg.value < mintPrice) revert InsufficientPayment();
+
+        bytes32 leaf = keccak256(abi.encodePacked(msg.sender));
+        if (!MerkleProof.verifyCalldata(proof, fcfsMerkleRoot, leaf)) revert InvalidProof();
+
+        mintedInFCFS[msg.sender] = true;
+        fcfsMinted++;
+        _mintOne(msg.sender, Phase.FCFS);
+    }
+
+    /// @notice Open public mint. 1 per wallet.
     function publicMint() external payable nonReentrant {
         if (currentPhase != Phase.Public) revert WrongPhase();
         if (mintedInPublic[msg.sender]) revert AlreadyMintedInPhase();
-        if (fcfsMinted >= FCFS_ALLOCATION) revert ExceedsPhaseAllocation();
         if (msg.value < mintPrice) revert InsufficientPayment();
 
         mintedInPublic[msg.sender] = true;
-        fcfsMinted++;
+        publicMinted++;
         _mintOne(msg.sender, Phase.Public);
     }
 
-    /// @notice Owner mint for vault + team allocation (up to RESERVED_ALLOCATION total).
+    /// @notice Owner mint for the team / vault allocation (up to RESERVED_ALLOCATION total).
     function reservedMint(address to, uint256 quantity) external onlyOwner {
         if (quantity == 0) revert ZeroQuantity();
-        if (reservedMinted + quantity > RESERVED_ALLOCATION) revert ExceedsPhaseAllocation();
+        if (reservedMinted + quantity > RESERVED_ALLOCATION) revert ExceedsReservedAllocation();
         if (_nextTokenId + quantity > MAX_SUPPLY) revert ExceedsMaxSupply();
 
         uint256 startId = _nextTokenId;
@@ -106,9 +116,14 @@ contract AgentNFT is ERC721, ERC721Enumerable, ERC2981, Ownable, ReentrancyGuard
         emit PhaseChanged(phase);
     }
 
-    function setWLMerkleRoot(bytes32 root) external onlyOwner {
-        wlMerkleRoot = root;
-        emit WLMerkleRootSet(root);
+    function setGTDMerkleRoot(bytes32 root) external onlyOwner {
+        gtdMerkleRoot = root;
+        emit GTDMerkleRootSet(root);
+    }
+
+    function setFCFSMerkleRoot(bytes32 root) external onlyOwner {
+        fcfsMerkleRoot = root;
+        emit FCFSMerkleRootSet(root);
     }
 
     function setMintPrice(uint256 price) external onlyOwner {

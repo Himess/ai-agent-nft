@@ -6,10 +6,6 @@ import {
   buildMerkle,
   MINT_PRICE,
   ROYALTY_BPS,
-  VAULT_ALLOCATION,
-  WL_ALLOCATION,
-  FCFS_ALLOCATION,
-  TEAM_ALLOCATION,
   RESERVED_ALLOCATION,
   Phase,
 } from "./helpers/fixtures";
@@ -46,112 +42,189 @@ describe("AgentNFT (SURVIVORS)", function () {
       expect(await nft.totalMinted()).to.equal(0);
     });
 
-    it("should expose correct allocation constants", async function () {
+    it("should expose correct supply constants", async function () {
       const { nft } = await loadFixture(deployAgentNFT);
-      expect(await nft.VAULT_ALLOCATION()).to.equal(VAULT_ALLOCATION);
-      expect(await nft.WL_ALLOCATION()).to.equal(WL_ALLOCATION);
-      expect(await nft.FCFS_ALLOCATION()).to.equal(FCFS_ALLOCATION);
-      expect(await nft.TEAM_ALLOCATION()).to.equal(TEAM_ALLOCATION);
-      expect(await nft.RESERVED_ALLOCATION()).to.equal(RESERVED_ALLOCATION);
       expect(await nft.MAX_SUPPLY()).to.equal(888);
-      expect(
-        VAULT_ALLOCATION + WL_ALLOCATION + FCFS_ALLOCATION + TEAM_ALLOCATION
-      ).to.equal(888n);
+      expect(await nft.RESERVED_ALLOCATION()).to.equal(RESERVED_ALLOCATION);
     });
   });
 
-  // ─── Whitelist Mint ──────────────────────────────────────────────
+  // ─── GTD Mint ────────────────────────────────────────────────────
 
-  describe("Whitelist Mint", function () {
-    it("should revert when phase is not Whitelist", async function () {
+  describe("GTD Mint", function () {
+    it("should revert when phase is not GTD", async function () {
       const { nft, owner, user1 } = await loadFixture(deployAgentNFT);
       const tree = buildMerkle([user1.address]);
-      await nft.connect(owner).setWLMerkleRoot(tree.root);
+      await nft.connect(owner).setGTDMerkleRoot(tree.root);
 
       await expect(
-        nft.connect(user1).wlMint(tree.proofFor(user1.address), { value: MINT_PRICE })
+        nft.connect(user1).gtdMint(tree.proofFor(user1.address), { value: MINT_PRICE })
       ).to.be.revertedWithCustomError(nft, "WrongPhase");
     });
 
-    it("should revert if merkle root is not set", async function () {
+    it("should revert if GTD merkle root is not set", async function () {
       const { nft, owner, user1 } = await loadFixture(deployAgentNFT);
-      await nft.connect(owner).setPhase(Phase.Whitelist);
+      await nft.connect(owner).setPhase(Phase.GTD);
 
       await expect(
-        nft.connect(user1).wlMint([], { value: MINT_PRICE })
+        nft.connect(user1).gtdMint([], { value: MINT_PRICE })
       ).to.be.revertedWithCustomError(nft, "MerkleRootNotSet");
     });
 
     it("should revert on invalid proof", async function () {
       const { nft, owner, user1, user2 } = await loadFixture(deployAgentNFT);
       const tree = buildMerkle([user1.address, user2.address]);
-      await nft.connect(owner).setWLMerkleRoot(tree.root);
-      await nft.connect(owner).setPhase(Phase.Whitelist);
+      await nft.connect(owner).setGTDMerkleRoot(tree.root);
+      await nft.connect(owner).setPhase(Phase.GTD);
 
       // user3 is not on the list
       const [, , , , , , user3] = await ethers.getSigners();
       await expect(
-        nft.connect(user3).wlMint(tree.proofFor(user1.address), { value: MINT_PRICE })
+        nft.connect(user3).gtdMint(tree.proofFor(user1.address), { value: MINT_PRICE })
       ).to.be.revertedWithCustomError(nft, "InvalidProof");
     });
 
     it("should revert on insufficient payment", async function () {
       const { nft, owner, user1 } = await loadFixture(deployAgentNFT);
       const tree = buildMerkle([user1.address]);
-      await nft.connect(owner).setWLMerkleRoot(tree.root);
-      await nft.connect(owner).setPhase(Phase.Whitelist);
+      await nft.connect(owner).setGTDMerkleRoot(tree.root);
+      await nft.connect(owner).setPhase(Phase.GTD);
 
       await expect(
-        nft.connect(user1).wlMint(tree.proofFor(user1.address), { value: 0 })
+        nft.connect(user1).gtdMint(tree.proofFor(user1.address), { value: 0 })
       ).to.be.revertedWithCustomError(nft, "InsufficientPayment");
     });
 
-    it("should mint one token to WL address", async function () {
+    it("should mint one token to GTD address", async function () {
       const { nft, owner, user1 } = await loadFixture(deployAgentNFT);
       const tree = buildMerkle([user1.address]);
-      await nft.connect(owner).setWLMerkleRoot(tree.root);
-      await nft.connect(owner).setPhase(Phase.Whitelist);
+      await nft.connect(owner).setGTDMerkleRoot(tree.root);
+      await nft.connect(owner).setPhase(Phase.GTD);
 
       await expect(
-        nft.connect(user1).wlMint(tree.proofFor(user1.address), { value: MINT_PRICE })
+        nft.connect(user1).gtdMint(tree.proofFor(user1.address), { value: MINT_PRICE })
       )
         .to.emit(nft, "Minted")
-        .withArgs(user1.address, 0, Phase.Whitelist);
+        .withArgs(user1.address, 0, Phase.GTD);
 
       expect(await nft.ownerOf(0)).to.equal(user1.address);
-      expect(await nft.wlMinted()).to.equal(1);
-      expect(await nft.mintedInWL(user1.address)).to.be.true;
+      expect(await nft.gtdMinted()).to.equal(1);
+      expect(await nft.mintedInGTD(user1.address)).to.be.true;
     });
 
-    it("should revert on second WL mint from same wallet", async function () {
+    it("should revert on second GTD mint from same wallet", async function () {
       const { nft, owner, user1 } = await loadFixture(deployAgentNFT);
       const tree = buildMerkle([user1.address]);
-      await nft.connect(owner).setWLMerkleRoot(tree.root);
-      await nft.connect(owner).setPhase(Phase.Whitelist);
+      await nft.connect(owner).setGTDMerkleRoot(tree.root);
+      await nft.connect(owner).setPhase(Phase.GTD);
 
-      await nft.connect(user1).wlMint(tree.proofFor(user1.address), { value: MINT_PRICE });
+      await nft.connect(user1).gtdMint(tree.proofFor(user1.address), { value: MINT_PRICE });
 
       await expect(
-        nft.connect(user1).wlMint(tree.proofFor(user1.address), { value: MINT_PRICE })
+        nft.connect(user1).gtdMint(tree.proofFor(user1.address), { value: MINT_PRICE })
       ).to.be.revertedWithCustomError(nft, "AlreadyMintedInPhase");
     });
 
-    it("should allow multiple WL addresses to mint 1 each", async function () {
+    it("should allow multiple GTD addresses to mint 1 each", async function () {
       const { nft, owner, user1, user2, user3 } = await loadFixture(deployAgentNFT);
       const tree = buildMerkle([user1.address, user2.address, user3.address]);
-      await nft.connect(owner).setWLMerkleRoot(tree.root);
-      await nft.connect(owner).setPhase(Phase.Whitelist);
+      await nft.connect(owner).setGTDMerkleRoot(tree.root);
+      await nft.connect(owner).setPhase(Phase.GTD);
 
-      await nft.connect(user1).wlMint(tree.proofFor(user1.address), { value: MINT_PRICE });
-      await nft.connect(user2).wlMint(tree.proofFor(user2.address), { value: MINT_PRICE });
-      await nft.connect(user3).wlMint(tree.proofFor(user3.address), { value: MINT_PRICE });
+      await nft.connect(user1).gtdMint(tree.proofFor(user1.address), { value: MINT_PRICE });
+      await nft.connect(user2).gtdMint(tree.proofFor(user2.address), { value: MINT_PRICE });
+      await nft.connect(user3).gtdMint(tree.proofFor(user3.address), { value: MINT_PRICE });
 
-      expect(await nft.wlMinted()).to.equal(3);
+      expect(await nft.gtdMinted()).to.equal(3);
       expect(await nft.totalMinted()).to.equal(3);
     });
   });
 
-  // ─── Public FCFS Mint ────────────────────────────────────────────
+  // ─── FCFS Mint (Merkle-gated race) ───────────────────────────────
+
+  describe("FCFS Mint", function () {
+    it("should revert when phase is not FCFS", async function () {
+      const { nft, owner, user1 } = await loadFixture(deployAgentNFT);
+      const tree = buildMerkle([user1.address]);
+      await nft.connect(owner).setFCFSMerkleRoot(tree.root);
+
+      await expect(
+        nft.connect(user1).fcfsMint(tree.proofFor(user1.address), { value: MINT_PRICE })
+      ).to.be.revertedWithCustomError(nft, "WrongPhase");
+    });
+
+    it("should revert if FCFS merkle root is not set", async function () {
+      const { nft, owner, user1 } = await loadFixture(deployAgentNFT);
+      await nft.connect(owner).setPhase(Phase.FCFS);
+
+      await expect(
+        nft.connect(user1).fcfsMint([], { value: MINT_PRICE })
+      ).to.be.revertedWithCustomError(nft, "MerkleRootNotSet");
+    });
+
+    it("should revert on invalid proof", async function () {
+      const { nft, owner, user1, user2 } = await loadFixture(deployAgentNFT);
+      const tree = buildMerkle([user1.address, user2.address]);
+      await nft.connect(owner).setFCFSMerkleRoot(tree.root);
+      await nft.connect(owner).setPhase(Phase.FCFS);
+
+      const [, , , , , , user3] = await ethers.getSigners();
+      await expect(
+        nft.connect(user3).fcfsMint(tree.proofFor(user1.address), { value: MINT_PRICE })
+      ).to.be.revertedWithCustomError(nft, "InvalidProof");
+    });
+
+    it("should mint one token in FCFS phase", async function () {
+      const { nft, owner, user1 } = await loadFixture(deployAgentNFT);
+      const tree = buildMerkle([user1.address]);
+      await nft.connect(owner).setFCFSMerkleRoot(tree.root);
+      await nft.connect(owner).setPhase(Phase.FCFS);
+
+      await expect(
+        nft.connect(user1).fcfsMint(tree.proofFor(user1.address), { value: MINT_PRICE })
+      )
+        .to.emit(nft, "Minted")
+        .withArgs(user1.address, 0, Phase.FCFS);
+
+      expect(await nft.ownerOf(0)).to.equal(user1.address);
+      expect(await nft.fcfsMinted()).to.equal(1);
+      expect(await nft.mintedInFCFS(user1.address)).to.be.true;
+    });
+
+    it("should revert on second FCFS mint from same wallet", async function () {
+      const { nft, owner, user1 } = await loadFixture(deployAgentNFT);
+      const tree = buildMerkle([user1.address]);
+      await nft.connect(owner).setFCFSMerkleRoot(tree.root);
+      await nft.connect(owner).setPhase(Phase.FCFS);
+
+      await nft.connect(user1).fcfsMint(tree.proofFor(user1.address), { value: MINT_PRICE });
+
+      await expect(
+        nft.connect(user1).fcfsMint(tree.proofFor(user1.address), { value: MINT_PRICE })
+      ).to.be.revertedWithCustomError(nft, "AlreadyMintedInPhase");
+    });
+
+    it("should allow GTD minter to also mint in FCFS phase (if on both lists)", async function () {
+      const { nft, owner, user1 } = await loadFixture(deployAgentNFT);
+      const gtdTree = buildMerkle([user1.address]);
+      const fcfsTree = buildMerkle([user1.address]);
+
+      await nft.connect(owner).setGTDMerkleRoot(gtdTree.root);
+      await nft.connect(owner).setFCFSMerkleRoot(fcfsTree.root);
+
+      await nft.connect(owner).setPhase(Phase.GTD);
+      await nft.connect(user1).gtdMint(gtdTree.proofFor(user1.address), { value: MINT_PRICE });
+
+      await nft.connect(owner).setPhase(Phase.FCFS);
+      await nft.connect(user1).fcfsMint(fcfsTree.proofFor(user1.address), { value: MINT_PRICE });
+
+      expect(await nft.balanceOf(user1.address)).to.equal(2);
+      expect(await nft.gtdMinted()).to.equal(1);
+      expect(await nft.fcfsMinted()).to.equal(1);
+    });
+  });
+
+  // ─── Public Mint ─────────────────────────────────────────────────
 
   describe("Public Mint", function () {
     it("should revert when phase is not Public", async function () {
@@ -179,7 +252,7 @@ describe("AgentNFT (SURVIVORS)", function () {
         .withArgs(user1.address, 0, Phase.Public);
 
       expect(await nft.ownerOf(0)).to.equal(user1.address);
-      expect(await nft.fcfsMinted()).to.equal(1);
+      expect(await nft.publicMinted()).to.equal(1);
       expect(await nft.mintedInPublic(user1.address)).to.be.true;
     });
 
@@ -204,12 +277,12 @@ describe("AgentNFT (SURVIVORS)", function () {
       );
     });
 
-    it("should allow WL minter to also mint in public phase", async function () {
+    it("should allow GTD minter to also mint in public phase", async function () {
       const { nft, owner, user1 } = await loadFixture(deployAgentNFT);
       const tree = buildMerkle([user1.address]);
-      await nft.connect(owner).setWLMerkleRoot(tree.root);
-      await nft.connect(owner).setPhase(Phase.Whitelist);
-      await nft.connect(user1).wlMint(tree.proofFor(user1.address), { value: MINT_PRICE });
+      await nft.connect(owner).setGTDMerkleRoot(tree.root);
+      await nft.connect(owner).setPhase(Phase.GTD);
+      await nft.connect(user1).gtdMint(tree.proofFor(user1.address), { value: MINT_PRICE });
 
       await nft.connect(owner).setPhase(Phase.Public);
       await nft.connect(user1).publicMint({ value: MINT_PRICE });
@@ -218,7 +291,7 @@ describe("AgentNFT (SURVIVORS)", function () {
     });
   });
 
-  // ─── Reserved Mint (Vault + Team) ────────────────────────────────
+  // ─── Reserved Mint (Team Vault) ──────────────────────────────────
 
   describe("Reserved Mint", function () {
     it("should allow owner to mint reserved", async function () {
@@ -261,71 +334,32 @@ describe("AgentNFT (SURVIVORS)", function () {
 
     it("should revert when exceeding RESERVED_ALLOCATION", async function () {
       const { nft, owner } = await loadFixture(deployAgentNFT);
-      // Mint up to RESERVED_ALLOCATION (138) in chunks of 20
-      for (let i = 0; i < 6; i++) {
-        await nft.connect(owner).reservedMint(owner.address, 20); // 120
+      // Mint up to RESERVED_ALLOCATION (88) in chunks of 20
+      for (let i = 0; i < 4; i++) {
+        await nft.connect(owner).reservedMint(owner.address, 20); // 80
       }
-      await nft.connect(owner).reservedMint(owner.address, 18); // 138 total
+      await nft.connect(owner).reservedMint(owner.address, 8); // 88 total
       expect(await nft.reservedMinted()).to.equal(RESERVED_ALLOCATION);
 
       await expect(
         nft.connect(owner).reservedMint(owner.address, 1)
-      ).to.be.revertedWithCustomError(nft, "ExceedsPhaseAllocation");
-    });
-  });
-
-  // ─── Phase Allocation Caps ───────────────────────────────────────
-
-  describe("Phase Allocation Caps", function () {
-    it("public phase hard-stops at FCFS_ALLOCATION", async function () {
-      const { nft, owner } = await loadFixture(deployAgentNFT);
-      await nft.connect(owner).setPhase(Phase.Public);
-
-      // Need FCFS_ALLOCATION + 1 signers to push past the cap. Use hardhat default pool.
-      // Simpler: set allocation by minting to FCFS_ALLOCATION via many signers.
-      // We only simulate exceeding by directly exhausting with a helper: mint via many fresh wallets.
-      // For practicality, we test the cap enforcement via a state override shortcut:
-      // use ethers.getSigners with impersonation is overkill — instead use a loop up to a smaller ceiling
-      // via setMintPrice=0 and iterate. Here we just verify: minting 1 sets fcfsMinted=1 (sanity), and
-      // leave the full 250 loop for the supply-cap test below.
-      const signers = await ethers.getSigners();
-      for (let i = 3; i < 3 + 5; i++) {
-        await nft.connect(signers[i]).publicMint({ value: MINT_PRICE });
-      }
-      expect(await nft.fcfsMinted()).to.equal(5);
-    });
-  });
-
-  // ─── Supply Cap ──────────────────────────────────────────────────
-
-  describe("Supply Cap", function () {
-    it("should revert when total minted would exceed MAX_SUPPLY", async function () {
-      const { nft, owner } = await loadFixture(deployAgentNFT);
-      // Fill reserved (138), then simulate hitting MAX_SUPPLY via reservedMint is impossible
-      // because reservedMint caps at RESERVED_ALLOCATION. Instead, fill reserved and then
-      // rely on a direct check that further reservedMint reverts with ExceedsPhaseAllocation.
-      for (let i = 0; i < 6; i++) {
-        await nft.connect(owner).reservedMint(owner.address, 20);
-      }
-      await nft.connect(owner).reservedMint(owner.address, 18);
-      expect(await nft.reservedMinted()).to.equal(RESERVED_ALLOCATION);
-
-      await expect(
-        nft.connect(owner).reservedMint(owner.address, 1)
-      ).to.be.revertedWithCustomError(nft, "ExceedsPhaseAllocation");
+      ).to.be.revertedWithCustomError(nft, "ExceedsReservedAllocation");
     });
   });
 
   // ─── Admin Functions ─────────────────────────────────────────────
 
   describe("Admin", function () {
-    it("should set phase", async function () {
+    it("should cycle through phases", async function () {
       const { nft, owner } = await loadFixture(deployAgentNFT);
 
-      await expect(nft.connect(owner).setPhase(Phase.Whitelist))
+      await expect(nft.connect(owner).setPhase(Phase.GTD))
         .to.emit(nft, "PhaseChanged")
-        .withArgs(Phase.Whitelist);
-      expect(await nft.currentPhase()).to.equal(Phase.Whitelist);
+        .withArgs(Phase.GTD);
+      expect(await nft.currentPhase()).to.equal(Phase.GTD);
+
+      await nft.connect(owner).setPhase(Phase.FCFS);
+      expect(await nft.currentPhase()).to.equal(Phase.FCFS);
 
       await nft.connect(owner).setPhase(Phase.Public);
       expect(await nft.currentPhase()).to.equal(Phase.Public);
@@ -341,13 +375,35 @@ describe("AgentNFT (SURVIVORS)", function () {
       ).to.be.revertedWithCustomError(nft, "OwnableUnauthorizedAccount");
     });
 
-    it("should set WL merkle root", async function () {
+    it("should set GTD merkle root", async function () {
       const { nft, owner, user1 } = await loadFixture(deployAgentNFT);
       const tree = buildMerkle([user1.address]);
-      await expect(nft.connect(owner).setWLMerkleRoot(tree.root))
-        .to.emit(nft, "WLMerkleRootSet")
+      await expect(nft.connect(owner).setGTDMerkleRoot(tree.root))
+        .to.emit(nft, "GTDMerkleRootSet")
         .withArgs(tree.root);
-      expect(await nft.wlMerkleRoot()).to.equal(tree.root);
+      expect(await nft.gtdMerkleRoot()).to.equal(tree.root);
+    });
+
+    it("should set FCFS merkle root", async function () {
+      const { nft, owner, user1 } = await loadFixture(deployAgentNFT);
+      const tree = buildMerkle([user1.address]);
+      await expect(nft.connect(owner).setFCFSMerkleRoot(tree.root))
+        .to.emit(nft, "FCFSMerkleRootSet")
+        .withArgs(tree.root);
+      expect(await nft.fcfsMerkleRoot()).to.equal(tree.root);
+    });
+
+    it("should keep GTD and FCFS roots independent", async function () {
+      const { nft, owner, user1, user2 } = await loadFixture(deployAgentNFT);
+      const gtdTree = buildMerkle([user1.address]);
+      const fcfsTree = buildMerkle([user2.address]);
+
+      await nft.connect(owner).setGTDMerkleRoot(gtdTree.root);
+      await nft.connect(owner).setFCFSMerkleRoot(fcfsTree.root);
+
+      expect(await nft.gtdMerkleRoot()).to.equal(gtdTree.root);
+      expect(await nft.fcfsMerkleRoot()).to.equal(fcfsTree.root);
+      expect(gtdTree.root).to.not.equal(fcfsTree.root);
     });
 
     it("should update mint price", async function () {

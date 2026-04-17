@@ -114,9 +114,11 @@ async function main() {
   console.log("  1. Verify contracts on Etherscan");
   console.log("  2. Configure approved targets on AgentAccount");
   console.log("  3. Set base URI on SurvivorsNFT");
-  console.log("  4. Set WL Merkle root: nft.setWLMerkleRoot(root)");
-  console.log("  5. Open WL phase:      nft.setPhase(1)  // Whitelist");
-  console.log("  6. Later open public:  nft.setPhase(2)  // Public FCFS");
+  console.log("  4. Set GTD Merkle root:  nft.setGTDMerkleRoot(rootGTD)");
+  console.log("  5. Open GTD phase:       nft.setPhase(1)  // GTD");
+  console.log("  6. Set FCFS Merkle root: nft.setFCFSMerkleRoot(rootFCFS)");
+  console.log("  7. Open FCFS phase:      nft.setPhase(2)  // FCFS");
+  console.log("  8. Open Public phase:    nft.setPhase(3)  // Public");
 }
 
 main().catch((error) => {

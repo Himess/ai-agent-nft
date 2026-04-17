@@ -3,16 +3,13 @@ import { ethers } from "hardhat";
 export const MINT_PRICE = ethers.parseEther("0.01");
 export const ROYALTY_BPS = 500n; // 5%
 export const MAX_SUPPLY = 888n;
-export const VAULT_ALLOCATION = 88n;
-export const WL_ALLOCATION = 500n;
-export const FCFS_ALLOCATION = 250n;
-export const TEAM_ALLOCATION = 50n;
-export const RESERVED_ALLOCATION = VAULT_ALLOCATION + TEAM_ALLOCATION; // 138
+export const RESERVED_ALLOCATION = 88n; // team / vault seats, owner-minted
 
 export enum Phase {
   Closed = 0,
-  Whitelist = 1,
-  Public = 2,
+  GTD = 1,
+  FCFS = 2,
+  Public = 3,
 }
 
 export async function deployAgentNFT() {

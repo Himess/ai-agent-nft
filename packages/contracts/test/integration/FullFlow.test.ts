@@ -154,9 +154,9 @@ describe("FullFlow Integration", function () {
         await loadFixture(deployFullSystem);
 
       // Enable public mint
-      await nft.setPhase(2); // Public
+      await nft.setPhase(3); // Public
 
-      // 10 fresh signers each FCFS-mint 1 NFT (signers 8..17 are free)
+      // 10 fresh signers each mint 1 NFT (signers 8..17 are free)
       const signers = await ethers.getSigners();
       for (let i = 8; i < 18; i++) {
         await nft.connect(signers[i]).publicMint({ value: MINT_PRICE });
@@ -201,7 +201,7 @@ describe("FullFlow Integration", function () {
     it("should handle multiple withdraw cycles", async function () {
       const { nft, splitter, agentAccount } = await loadFixture(deployFullSystem);
 
-      await nft.setPhase(2); // Public
+      await nft.setPhase(3); // Public
       const signers = await ethers.getSigners();
 
       // First batch: 5 fresh wallets each mint 1
@@ -232,7 +232,7 @@ describe("FullFlow Integration", function () {
         await loadFixture(deployFullSystem);
 
       // Fund agent via public mints from 10 fresh wallets → 0.1 ETH → 50% = 0.05 ETH
-      await nft.setPhase(2);
+      await nft.setPhase(3);
       const signers = await ethers.getSigners();
       for (let i = 8; i < 18; i++) {
         await nft.connect(signers[i]).publicMint({ value: MINT_PRICE });
@@ -326,7 +326,7 @@ describe("FullFlow Integration", function () {
       } = await loadFixture(deployFullSystem);
 
       // ── 1. PUBLIC MINT ────────────────────────────────────────
-      await nft.setPhase(2); // Public
+      await nft.setPhase(3); // Public
       // 10 fresh wallets each mint 1 NFT (signers 8..17 free)
       const signers = await ethers.getSigners();
       for (let i = 8; i < 18; i++) {
@@ -382,9 +382,9 @@ describe("FullFlow Integration", function () {
       expect(info.verified).to.be.true;
 
       // ── 6. VERIFY FINAL STATE ─────────────────────────────────
-      // NFT holders — 10 distinct FCFS minters + deployer's agent NFT
+      // NFT holders — 10 distinct public minters + deployer's agent NFT
       expect(await nft.balanceOf(deployer.address)).to.equal(1); // Agent's NFT
-      expect(await nft.fcfsMinted()).to.equal(10);
+      expect(await nft.publicMinted()).to.equal(10);
 
       // Agent state incremented
       expect(await agentAccount.state()).to.equal(1);
