@@ -1,0 +1,5 @@
+module.exports = [
+  "SURVIVORS",
+  "SVVR",
+  ["0x00005EA00Ac477B1030CE78506496e8C2dE24bf5"],
+];
