@@ -24,12 +24,31 @@ export const FEE_BPS = 1000;
 export const MAX_PER_WALLET = 1;
 
 // ─── Supply per stage ────────────────────────────────────────────
-// Not strictly enforced on-chain per stage (only MAX_SUPPLY=888 is), but useful
-// as upper bounds in stage configs via `maxTokenSupplyForStage`.
-export const TEAM_ALLOC = 88;
-export const GTD_ALLOC = 750;  // quiz(200) + app(300) + collab(100) + yan(100) + agent(50)
-export const FCFS_ALLOC = 250; // quiz(100) + collab(100) + agent raffle(50)
+// Not strictly enforced on-chain per stage (only MAX_SUPPLY=888 is), but
+// useful as upper bounds in stage configs via `maxTokenSupplyForStage`
+// and for the off-chain allowlist merge/validation step.
 export const MAX_SUPPLY = 888;
+
+// ─── Allocation caps per WL source ───────────────────────────────
+// Hard limits enforced in `scripts/build-allowlists.ts` when the per-source
+// lists are merged into the final GTD + FCFS merkle trees. If any source
+// file exceeds its cap, the merge script refuses to run.
+//
+// Totals (2026-04-18 plan):
+//   GTD  — team 88 + quiz 100 + app 200 + social 100 + collab 100 + yan 100 + agent 50 = 738
+//   FCFS —              quiz 100                     + social 100 + collab 100         + agent 50 = 350
+export const ALLOCATION_CAPS = {
+  team:   { gtd: 88,  fcfs: 0 },   // reservedMint (owner-only)
+  quiz:   { gtd: 100, fcfs: 100 }, // agent-scored quiz on the site
+  app:    { gtd: 200, fcfs: 0 },   // agent-scored /apply submissions
+  social: { gtd: 100, fcfs: 100 }, // site leaderboard (top N → GTD, raffle → FCFS)
+  collab: { gtd: 100, fcfs: 100 }, // partner collections / community deals
+  yan:    { gtd: 100, fcfs: 0 },   // team-held alt wallets (not revealed on-chain)
+  agent:  { gtd: 50,  fcfs: 50 },  // agent-run Twitter giveaway (curation + raffle)
+} as const;
+
+export const TOTAL_GTD = Object.values(ALLOCATION_CAPS).reduce((a, c) => a + c.gtd, 0);
+export const TOTAL_FCFS = Object.values(ALLOCATION_CAPS).reduce((a, c) => a + c.fcfs, 0);
 
 // ─── Stage indices (non-zero for allowlist stages per SeaDrop) ───
 export const GTD_STAGE_INDEX = 1;

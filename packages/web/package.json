@@ -11,7 +11,9 @@
     "migrate": "tsx scripts/migrate.ts",
     "export": "tsx scripts/export.ts all",
     "export:wl": "tsx scripts/export.ts wl",
-    "export:wallets": "tsx scripts/export.ts wallets"
+    "export:wallets": "tsx scripts/export.ts wallets",
+    "export:quiz": "tsx scripts/export.ts quiz",
+    "export:quiz:wl": "tsx scripts/export.ts quiz:wl"
   },
   "dependencies": {
     "@neondatabase/serverless": "^0.10.4",

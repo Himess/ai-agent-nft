@@ -54,6 +54,29 @@ async function main() {
       );
       rows = r;
       outName = "wl-wallets.csv";
+    } else if (MODE === "quiz") {
+      const { rows: r } = await client.query(
+        `SELECT id, created_at, status, score, scored_at, wallet, twitter,
+                answers, scorer_notes, ip, user_agent
+           FROM quiz_submissions
+          ORDER BY score DESC NULLS LAST, created_at ASC`
+      );
+      // JSONB answers come back as objects — flatten them out so CSV shows
+      // each question in its own column.
+      rows = r.map((row) => {
+        const { answers, ...rest } = row as Row & { answers: Record<string, string> };
+        return { ...rest, ...answers };
+      });
+      outName = `quiz-${new Date().toISOString().slice(0, 10)}.csv`;
+    } else if (MODE === "quiz:wl") {
+      const { rows: r } = await client.query(
+        `SELECT wallet, score, scored_at
+           FROM quiz_submissions
+          WHERE status = 'approved'
+          ORDER BY score DESC NULLS LAST, scored_at ASC`
+      );
+      rows = r;
+      outName = "quiz-wl-approved.csv";
     } else {
       const { rows: r } = await client.query(
         `SELECT id, created_at, status, score, name, twitter, wallet,
