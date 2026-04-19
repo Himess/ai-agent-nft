@@ -54,8 +54,6 @@ interface Task {
 
 interface Gate {
   x: GateState;
-  discord: GateState;
-  telegram: GateState;
 }
 
 // ─── Primitives ──────────────────────────────────────────────────
@@ -151,9 +149,6 @@ function Hero() {
       <Grain opacity={0.05} />
       <div className="relative mx-auto max-w-[1040px] px-6 pb-20 pt-28 text-center">
         <ScrollReveal>
-          <div className="mb-6">
-            <PillTag>Closes in 6d 12h</PillTag>
-          </div>
           <h1
             className="m-0"
             style={{
@@ -271,7 +266,7 @@ function Gate({
                 color: BONE,
               }}
             >
-              Three thresholds. Cross all three to earn.
+              One threshold. Cross it to earn.
             </h2>
           </div>
         </ScrollReveal>
@@ -282,18 +277,6 @@ function Gate({
               name="Follow @TheSeventh_xyz on X"
               state={gate.x}
               onVerify={() => onVerify("x")}
-            />
-            <GateRow
-              icon={<IconDiscord />}
-              name="Join the Discord Order"
-              state={gate.discord}
-              onVerify={() => onVerify("discord")}
-            />
-            <GateRow
-              icon={<IconTelegram />}
-              name="Join the Telegram Watchtower"
-              state={gate.telegram}
-              onVerify={() => onVerify("telegram")}
             />
           </div>
         </ScrollReveal>
@@ -669,17 +652,10 @@ const leaderboardRows = [
 ];
 
 export function RaffleClient() {
-  const [gate, setGate] = useState<Gate>({
-    x: "verified",
-    discord: "pending",
-    telegram: "locked",
-  });
+  const [gate, setGate] = useState<Gate>({ x: "pending" });
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
 
-  const locked =
-    gate.x !== "verified" ||
-    gate.discord !== "verified" ||
-    gate.telegram !== "verified";
+  const locked = gate.x !== "verified";
 
   const verifyGate = (key: keyof Gate) =>
     setGate((g) => ({ ...g, [key]: "verified" }));
