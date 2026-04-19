@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit",
     "migrate": "tsx scripts/migrate.ts",
     "migrate:reset": "tsx scripts/migrate.ts --reset",
+    "seed:tasks": "tsx scripts/seed-tasks.ts",
     "export": "tsx scripts/export.ts all",
     "export:wl": "tsx scripts/export.ts wl",
     "export:wallets": "tsx scripts/export.ts wallets",
