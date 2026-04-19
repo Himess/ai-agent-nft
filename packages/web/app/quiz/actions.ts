@@ -1,6 +1,8 @@
 "use server";
 
 import { headers } from "next/headers";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth-config";
 import { getSql } from "@/lib/db";
 import { quizSchema, QUIZ_QUESTIONS, type QuizInput } from "@/lib/quiz-schema";
 import { looksLikeBot } from "@/lib/spam";
@@ -31,45 +33,43 @@ export async function submitQuiz(
   _prev: QuizFormState,
   formData: FormData
 ): Promise<QuizFormState> {
-  // ── Layer 1: honeypot + time gate ────────────────────────────────
-  if (looksLikeBot(formData)) {
-    return SILENT_SUCCESS;
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.wallet) {
+    return { status: "error", message: "Connect your wallet first." };
   }
+  if (!session.user.twitterLinked || !session.user.twitterHandle) {
+    return { status: "error", message: "Link your X account first." };
+  }
+  const wallet = session.user.wallet.toLowerCase();
+  const twitter = session.user.twitterHandle.replace(/^@/, "").toLowerCase();
 
-  // ── Layer 2: IP-based rate limiting ──────────────────────────────
+  if (looksLikeBot(formData)) return SILENT_SUCCESS;
+
   const ip = await getClientIp();
   if (ip) {
     const burst = quizPerIpLimiter();
     if (burst) {
       const res = await burst.limit(ip);
-      if (!res.success) {
+      if (!res.success)
         return {
           status: "error",
           message:
             "Too many attempts from this connection. Breathe. Try again in a few minutes.",
         };
-      }
     }
     const hourly = quizPerIpHourlyLimiter();
     if (hourly) {
       const res = await hourly.limit(ip);
-      if (!res.success) {
+      if (!res.success)
         return {
           status: "error",
           message: "Hourly limit reached from this connection.",
         };
-      }
     }
   }
 
-  // ── Layer 3: schema validation ───────────────────────────────────
-  const raw: Record<string, unknown> = {
-    twitter: formData.get("twitter"),
-    wallet: formData.get("wallet"),
-  };
-  for (const q of QUIZ_QUESTIONS) {
-    raw[q.id] = formData.get(q.id);
-  }
+  const raw: Record<string, unknown> = {};
+  for (const q of QUIZ_QUESTIONS) raw[q.id] = formData.get(q.id);
 
   const parsed = quizSchema.safeParse(raw);
   if (!parsed.success) {
@@ -86,12 +86,8 @@ export async function submitQuiz(
       fieldErrors,
     };
   }
-
   const data = parsed.data;
-  const wallet = data.wallet.toLowerCase();
-  const twitter = data.twitter.replace(/^@/, "").toLowerCase();
 
-  // ── Layer 4: wallet lifetime check ───────────────────────────────
   if (await quizWalletAlreadySubmitted(wallet)) {
     return {
       status: "error",
@@ -99,11 +95,9 @@ export async function submitQuiz(
     };
   }
 
-  // ── Layer 5: DB write (UNIQUE constraint is final guard) ─────────
   const h = await headers();
   const userAgent = h.get("user-agent") ?? null;
 
-  // Persist only the scored fields (no PII we don't need).
   const answers: Record<string, string> = {};
   for (const q of QUIZ_QUESTIONS) {
     answers[q.id] = (data as QuizInput)[q.id as keyof QuizInput] as string;

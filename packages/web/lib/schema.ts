@@ -1,9 +1,10 @@
 import { z } from "zod";
 
+// Identity (wallet + twitter) comes from the SIWE + X-OAuth session, not the
+// form. The fields below are the narrative prompts — authored by the user.
+
 export const LIMITS = {
   name: { min: 1, max: 120 },
-  twitter: { min: 1, max: 16 },
-  wallet: { min: 42, max: 42 },
   discovery: { min: 10, max: 500 },
   endurance: { min: 10, max: 1500 },
   recognition: { min: 10, max: 1500 },
@@ -20,14 +21,6 @@ const bounded = (min: number, max: number) =>
 
 export const applicationSchema = z.object({
   name: bounded(LIMITS.name.min, LIMITS.name.max),
-  twitter: bounded(LIMITS.twitter.min, LIMITS.twitter.max).regex(
-    /^@?[A-Za-z0-9_]{1,15}$/,
-    "Invalid X / Twitter handle"
-  ),
-  wallet: z
-    .string()
-    .trim()
-    .regex(/^0x[a-fA-F0-9]{40}$/, "Invalid Ethereum address"),
   discovery: bounded(LIMITS.discovery.min, LIMITS.discovery.max),
   endurance: bounded(LIMITS.endurance.min, LIMITS.endurance.max),
   recognition: bounded(LIMITS.recognition.min, LIMITS.recognition.max),
@@ -50,24 +43,6 @@ export const QUESTIONS = [
     placeholder: "How the order should know you.",
     min: LIMITS.name.min,
     max: LIMITS.name.max,
-    required: true,
-  },
-  {
-    id: "twitter",
-    label: "X / Twitter Handle",
-    type: "input",
-    placeholder: "@handle",
-    min: LIMITS.twitter.min,
-    max: LIMITS.twitter.max,
-    required: true,
-  },
-  {
-    id: "wallet",
-    label: "Wallet Address",
-    type: "input",
-    placeholder: "0x…",
-    min: LIMITS.wallet.min,
-    max: LIMITS.wallet.max,
     required: true,
   },
   {

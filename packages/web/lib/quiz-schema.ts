@@ -1,8 +1,9 @@
 import { z } from "zod";
 
+// Identity (wallet + twitter) comes from the SIWE + X-OAuth session, never
+// the form. Only the ten trial answers live in the submission.
+
 export const QUIZ_LIMITS = {
-  twitter: { min: 1, max: 16 },
-  wallet: { min: 42, max: 42 },
   recognition: { min: 50, max: 500 },
   collapse: { min: 80, max: 800 },
   katana: { min: 60, max: 500 },
@@ -23,14 +24,6 @@ const bounded = (min: number, max: number) =>
     .max(max, `Must be at most ${max} characters`);
 
 export const quizSchema = z.object({
-  twitter: bounded(QUIZ_LIMITS.twitter.min, QUIZ_LIMITS.twitter.max).regex(
-    /^@?[A-Za-z0-9_]{1,15}$/,
-    "Invalid X / Twitter handle"
-  ),
-  wallet: z
-    .string()
-    .trim()
-    .regex(/^0x[a-fA-F0-9]{40}$/, "Invalid Ethereum address"),
   recognition: bounded(QUIZ_LIMITS.recognition.min, QUIZ_LIMITS.recognition.max),
   collapse: bounded(QUIZ_LIMITS.collapse.min, QUIZ_LIMITS.collapse.max),
   katana: bounded(QUIZ_LIMITS.katana.min, QUIZ_LIMITS.katana.max),
@@ -45,37 +38,14 @@ export const quizSchema = z.object({
 
 export type QuizInput = z.infer<typeof quizSchema>;
 
-// Identifier questions ask for twitter + wallet. Everything else is scored by
-// the agent. Single source of truth for the form (client) + the server action
-// + the DB export script.
-export const QUIZ_IDENTITY = [
-  {
-    id: "twitter",
-    label: "X / Twitter Handle",
-    type: "input",
-    placeholder: "@handle",
-    min: QUIZ_LIMITS.twitter.min,
-    max: QUIZ_LIMITS.twitter.max,
-    required: true,
-  },
-  {
-    id: "wallet",
-    label: "Wallet Address",
-    type: "input",
-    placeholder: "0x…",
-    min: QUIZ_LIMITS.wallet.min,
-    max: QUIZ_LIMITS.wallet.max,
-    required: true,
-  },
-] as const;
-
 export const QUIZ_QUESTIONS = [
   {
     id: "recognition",
-    label: "Which of The Seven do you recognize in yourself — and what scar proves it?",
+    label:
+      "Which of The Seven do you recognize in yourself — and what scar proves it?",
     type: "textarea",
     placeholder:
-      "Name one: Young Ronin, Crimson Widow, Old Samurai, Farwalker, Shadow Chief, or the two unrevealed. Explain why.",
+      "Name one: Young Ronin, Crimson Widow, Old Samurai, Farwalker, Shadow Chief, Iron Vow, Hidden Hand. Explain why.",
     min: QUIZ_LIMITS.recognition.min,
     max: QUIZ_LIMITS.recognition.max,
     required: true,
@@ -156,7 +126,8 @@ export const QUIZ_QUESTIONS = [
   },
   {
     id: "refusal",
-    label: "What would you refuse to do for an airdrop? Name one specific thing.",
+    label:
+      "What would you refuse to do for an airdrop? Name one specific thing.",
     type: "textarea",
     placeholder: "A line you don't cross, even at the price of free money.",
     min: QUIZ_LIMITS.refusal.min,

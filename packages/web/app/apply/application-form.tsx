@@ -83,7 +83,8 @@ export function ApplicationForm() {
 
       <div className="grid gap-5 md:grid-cols-2">
         {QUESTIONS.map((q, i) => {
-          const wide = i >= 3;
+          // Name sits half-width; all narrative answers go full-width.
+          const wide = i >= 1;
           const err = fieldErrors[q.id];
           const count = counts[q.id] ?? 0;
           const near = count > q.max * 0.85;
@@ -144,16 +145,12 @@ export function ApplicationForm() {
                   maxLength={q.max}
                   disabled={pending}
                   autoComplete="off"
-                  spellCheck={q.id === "wallet" ? false : undefined}
-                  inputMode={q.id === "wallet" ? "text" : undefined}
                   className="w-full rounded-2xl border bg-transparent p-4 text-base text-white/90 outline-none transition placeholder:text-white/30 focus:border-white/30"
                   style={{
                     borderColor: err
                       ? "rgba(122,15,20,.6)"
                       : "rgba(140,122,79,.18)",
                     background: "rgba(28,34,51,.16)",
-                    fontFamily:
-                      q.id === "wallet" ? "ui-monospace, monospace" : undefined,
                   }}
                 />
               )}

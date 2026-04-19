@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Nav } from "@/components/nav";
+import { AuthGate } from "@/components/auth-gate";
 import { ApplicationForm } from "./application-form";
 
 export const metadata: Metadata = {
@@ -17,7 +18,7 @@ const pillars = [
   "Discipline over speculation",
 ];
 
-export default function ApplyPage() {
+export default async function ApplyPage() {
   return (
     <div>
       <Nav />
@@ -63,7 +64,9 @@ export default function ApplyPage() {
             ))}
           </div>
 
-          <ApplicationForm />
+          <AuthGate>
+            <ApplicationForm />
+          </AuthGate>
 
           <div className="mt-10 text-center">
             <Link

@@ -1,6 +1,8 @@
 "use server";
 
 import { headers } from "next/headers";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth-config";
 import { getSql } from "@/lib/db";
 import { applicationSchema } from "@/lib/schema";
 import { looksLikeBot } from "@/lib/spam";
@@ -31,49 +33,55 @@ export async function submitApplication(
   _prev: FormState,
   formData: FormData
 ): Promise<FormState> {
-  // ── Layer 1: honeypot + time gate ────────────────────────────────
-  // Silent success: never reveal the detection to the bot.
-  if (looksLikeBot(formData)) {
-    return SILENT_SUCCESS;
+  // Layer 0 — authenticated wallet + linked twitter. If the session is
+  // missing for any reason we refuse the write rather than creating an
+  // orphaned row.
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.wallet) {
+    return { status: "error", message: "Connect your wallet first." };
   }
+  if (!session.user.twitterLinked || !session.user.twitterHandle) {
+    return { status: "error", message: "Link your X account first." };
+  }
+  const wallet = session.user.wallet.toLowerCase();
+  const twitter = session.user.twitterHandle.replace(/^@/, "").toLowerCase();
 
-  // ── Layer 2: IP-based rate limiting ──────────────────────────────
+  // Layer 1 — honeypot + time gate (silent success for bots).
+  if (looksLikeBot(formData)) return SILENT_SUCCESS;
+
+  // Layer 2 — per-IP burst + hourly.
   const ip = await getClientIp();
   if (ip) {
     const burst = perIpLimiter();
     if (burst) {
       const res = await burst.limit(ip);
-      if (!res.success) {
+      if (!res.success)
         return {
           status: "error",
-          message: "Too many attempts from this connection. Breathe. Try again in a few minutes.",
+          message:
+            "Too many attempts from this connection. Breathe. Try again in a few minutes.",
         };
-      }
     }
     const hourly = perIpHourlyLimiter();
     if (hourly) {
       const res = await hourly.limit(ip);
-      if (!res.success) {
+      if (!res.success)
         return {
           status: "error",
           message: "Hourly limit reached from this connection.",
         };
-      }
     }
   }
 
-  // ── Layer 3: schema validation ───────────────────────────────────
+  // Layer 3 — Zod over the narrative fields only (identity comes from session).
   const raw = {
     name: formData.get("name"),
-    twitter: formData.get("twitter"),
-    wallet: formData.get("wallet"),
     discovery: formData.get("discovery"),
     endurance: formData.get("endurance"),
     recognition: formData.get("recognition"),
     offering: formData.get("offering"),
     links: formData.get("links") ?? "",
   };
-
   const parsed = applicationSchema.safeParse(raw);
   if (!parsed.success) {
     const fieldErrors: Record<string, string> = {};
@@ -89,12 +97,9 @@ export async function submitApplication(
       fieldErrors,
     };
   }
-
   const data = parsed.data;
-  const wallet = data.wallet.toLowerCase();
-  const twitter = data.twitter.replace(/^@/, "").toLowerCase();
 
-  // ── Layer 4: wallet lifetime check (fast path via Redis) ─────────
+  // Layer 4 — wallet Redis fast-reject.
   if (await walletAlreadySubmitted(wallet)) {
     return {
       status: "error",
@@ -102,7 +107,7 @@ export async function submitApplication(
     };
   }
 
-  // ── Layer 5: DB write (UNIQUE constraint is final guard) ─────────
+  // Layer 5 — DB INSERT, UNIQUE is the final guard.
   const h = await headers();
   const userAgent = h.get("user-agent") ?? null;
 
@@ -110,10 +115,10 @@ export async function submitApplication(
     const sql = getSql();
     await sql`
       INSERT INTO applications (
-        name, twitter, wallet, discovery, endurance,
+        wallet, twitter, name, discovery, endurance,
         recognition, offering, links, ip, user_agent
       ) VALUES (
-        ${data.name}, ${twitter}, ${wallet}, ${data.discovery},
+        ${wallet}, ${twitter}, ${data.name}, ${data.discovery},
         ${data.endurance}, ${data.recognition}, ${data.offering},
         ${data.links ?? ""}, ${ip}, ${userAgent}
       )

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Nav } from "@/components/nav";
+import { AuthGate } from "@/components/auth-gate";
 import { QuizChat } from "./quiz-chat";
 
 export const metadata: Metadata = {
@@ -10,7 +11,7 @@ export const metadata: Metadata = {
 
 const GOLD = "#8C7A4F";
 
-export default function QuizPage() {
+export default async function QuizPage() {
   return (
     <div>
       <Nav />
@@ -40,7 +41,9 @@ export default function QuizPage() {
             </p>
           </div>
 
-          <QuizChat />
+          <AuthGate>
+            <QuizChat />
+          </AuthGate>
 
           <div className="mt-10 text-center">
             <Link

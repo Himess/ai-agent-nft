@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useMemo, useRef, useState } from "react";
 import { submitQuiz, type QuizFormState } from "./actions";
-import { QUIZ_LIMITS, QUIZ_QUESTIONS, type QuizQuestionId } from "@/lib/quiz-schema";
+import { QUIZ_QUESTIONS, type QuizQuestionId } from "@/lib/quiz-schema";
 import { HONEYPOT_FIELD, TIMESTAMP_FIELD } from "@/lib/spam";
 
 const GOLD = "#8C7A4F";
@@ -13,7 +13,7 @@ const CARD_BLACK = "rgba(10,10,10,.56)";
 
 // ─── Agent reply pool ──────────────────────────────────────────
 // Pre-scripted. Short. Ritualistic. Never encouraging in the "great job!" sense.
-// Three registers — the Chat alternates between them with a slight bias toward
+// Three registers — the chat alternates between them with a slight bias toward
 // "reflect" on heavy questions (collapse, scroll) and "press" on judgment calls.
 
 const REPLIES = {
@@ -22,8 +22,7 @@ const REPLIES = {
   reflect: ["That carries weight.", "The order remembers.", "Signal — faint, but there.", "Deeper than it looked.", "Kept."],
 } as const;
 
-// Per-question register bias. Index 0 = wallet/twitter identity steps,
-// 1..10 = the ten real questions in order.
+// Per-question register bias.
 const REGISTER_PER_Q: ReadonlyArray<keyof typeof REPLIES> = [
   "receive", "reflect", "receive", "press", "press",
   "receive", "reflect", "press",  "reflect", "receive",
@@ -39,12 +38,7 @@ type Message =
   | { id: string; role: "agent"; kind: "intro" | "question" | "reply" | "outro"; text: string }
   | { id: string; role: "user";  kind: "answer"; text: string };
 
-// ─── Steps ────────────────────────────────────────────────────
-// 0              — identity (twitter + wallet, compact two-input turn)
-// 1..10          — question i-1 of QUIZ_QUESTIONS
-// 11             — final "submit" state (button shown, server action fires)
-
-const IDENTITY_STEP = 0;
+// Steps: 1..10 = question i-1 of QUIZ_QUESTIONS, 11 = final submit state.
 const FIRST_Q_STEP = 1;
 const LAST_Q_STEP  = FIRST_Q_STEP + QUIZ_QUESTIONS.length - 1; // 10
 const SUBMIT_STEP  = LAST_Q_STEP + 1;                          // 11
@@ -57,13 +51,6 @@ const INTRO: Message = {
   kind: "intro",
   text:
     "The Seventh acknowledges you. Ten questions follow. No scores are revealed. Speak plainly.",
-};
-
-const IDENTITY_PROMPT: Message = {
-  id: "q-identity",
-  role: "agent",
-  kind: "question",
-  text: "Before the trial: your handle on X, and the wallet you stand behind.",
 };
 
 const OUTRO: Message = {
@@ -156,97 +143,7 @@ function UserBubble({ children }: { children: React.ReactNode }) {
   );
 }
 
-// ─── Identity inputs (step 0) ─────────────────────────────────
-
-function IdentityInput({
-  onSubmit,
-  disabled,
-}: {
-  onSubmit: (twitter: string, wallet: string) => void;
-  disabled?: boolean;
-}) {
-  const [twitter, setTwitter] = useState("");
-  const [wallet, setWallet] = useState("");
-  const [error, setError] = useState<string | null>(null);
-
-  function handle(e: React.FormEvent) {
-    e.preventDefault();
-    const tw = twitter.trim().replace(/^@/, "");
-    const wl = wallet.trim();
-    if (!/^[A-Za-z0-9_]{1,15}$/.test(tw)) {
-      setError("Your handle doesn't look right.");
-      return;
-    }
-    if (!/^0x[a-fA-F0-9]{40}$/.test(wl)) {
-      setError("That wallet address isn't valid.");
-      return;
-    }
-    setError(null);
-    onSubmit(tw, wl);
-  }
-
-  return (
-    <form
-      onSubmit={handle}
-      className="rounded-2xl border p-5"
-      style={{ borderColor: BORDER_GOLD, background: "rgba(10,10,10,.44)" }}
-    >
-      <div
-        className="mb-3 text-[10px] uppercase"
-        style={{ color: GOLD, letterSpacing: "0.3em" }}
-      >
-        Identity
-      </div>
-      <div className="grid gap-3 md:grid-cols-2">
-        <input
-          type="text"
-          placeholder="@handle"
-          value={twitter}
-          onChange={(e) => setTwitter(e.target.value)}
-          disabled={disabled}
-          autoComplete="off"
-          className="w-full rounded-xl border bg-transparent p-3 text-[15px] text-white/90 outline-none transition placeholder:text-white/30 focus:border-white/30"
-          style={{
-            borderColor: BORDER_GOLD,
-            background: "rgba(28,34,51,.16)",
-          }}
-        />
-        <input
-          type="text"
-          placeholder="0x…"
-          value={wallet}
-          onChange={(e) => setWallet(e.target.value)}
-          disabled={disabled}
-          autoComplete="off"
-          spellCheck={false}
-          className="w-full rounded-xl border bg-transparent p-3 text-[14px] text-white/90 outline-none transition placeholder:text-white/30 focus:border-white/30"
-          style={{
-            borderColor: BORDER_GOLD,
-            background: "rgba(28,34,51,.16)",
-            fontFamily: "ui-monospace, Menlo, monospace",
-          }}
-        />
-      </div>
-      {error ? (
-        <div className="mt-2 text-xs" style={{ color: "#e8a0a4" }}>
-          {error}
-        </div>
-      ) : null}
-      <div className="mt-4 flex justify-end">
-        <button
-          type="submit"
-          disabled={disabled}
-          className="rounded-full px-5 py-2.5 text-[13px] font-medium transition-opacity hover:opacity-90 disabled:opacity-50"
-          style={{ background: CRIMSON, color: BONE }}
-        >
-          Continue
-        </button>
-      </div>
-    </form>
-  );
-}
-
-// ─── Answer composer (steps 1..10) ────────────────────────────
+// ─── Answer composer ──────────────────────────────────────────
 
 function AnswerComposer({
   question,
@@ -344,17 +241,22 @@ export function QuizChat() {
     initialServerState
   );
 
-  const [step, setStep] = useState<number>(IDENTITY_STEP);
-  const [answers, setAnswers] = useState<
-    Partial<Record<QuizQuestionId | "twitter" | "wallet", string>>
-  >({});
-  const [messages, setMessages] = useState<Message[]>([INTRO, IDENTITY_PROMPT]);
+  const [step, setStep] = useState<number>(FIRST_Q_STEP);
+  const [answers, setAnswers] = useState<Partial<Record<QuizQuestionId, string>>>({});
+  const [messages, setMessages] = useState<Message[]>([
+    INTRO,
+    {
+      id: `q-${QUIZ_QUESTIONS[0].id}`,
+      role: "agent",
+      kind: "question",
+      text: QUIZ_QUESTIONS[0].label,
+    },
+  ]);
   const [agentTyping, setAgentTyping] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
-  // Auto-scroll to latest message
   useEffect(() => {
     scrollRef.current?.scrollTo({
       top: scrollRef.current.scrollHeight,
@@ -362,8 +264,6 @@ export function QuizChat() {
     });
   }, [messages, agentTyping]);
 
-  // When the user reaches SUBMIT_STEP, auto-fire the form submission
-  // (triggers the server action with all hidden fields populated).
   useEffect(() => {
     if (step === SUBMIT_STEP && formRef.current && serverState.status === "idle") {
       formRef.current.requestSubmit();
@@ -377,9 +277,8 @@ export function QuizChat() {
   async function advance(
     userText: string,
     nextStep: number,
-    questionForRegister?: (typeof QUIZ_QUESTIONS)[number]
+    currentQ: (typeof QUIZ_QUESTIONS)[number]
   ) {
-    // 1. User bubble immediately
     pushMessage({
       id: `u-${step}-${Date.now()}`,
       role: "user",
@@ -387,17 +286,11 @@ export function QuizChat() {
       text: userText,
     });
 
-    // 2. Short pause, typing indicator
     setAgentTyping(true);
     await new Promise((r) => setTimeout(r, 600));
 
-    // 3. Agent reply (scripted)
-    const register = questionForRegister
-      ? REGISTER_PER_Q[
-          QUIZ_QUESTIONS.indexOf(questionForRegister) %
-            REGISTER_PER_Q.length
-        ]
-      : "receive";
+    const register =
+      REGISTER_PER_Q[QUIZ_QUESTIONS.indexOf(currentQ) % REGISTER_PER_Q.length];
     const reply = randomFrom(REPLIES[register]);
     pushMessage({
       id: `a-reply-${step}-${Date.now()}`,
@@ -407,14 +300,13 @@ export function QuizChat() {
     });
     await new Promise((r) => setTimeout(r, 700));
 
-    // 4. Ask next question OR outro
     if (nextStep >= FIRST_Q_STEP && nextStep <= LAST_Q_STEP) {
-      const q = QUIZ_QUESTIONS[nextStep - FIRST_Q_STEP];
+      const nextQ = QUIZ_QUESTIONS[nextStep - FIRST_Q_STEP];
       pushMessage({
-        id: `q-${q.id}`,
+        id: `q-${nextQ.id}`,
         role: "agent",
         kind: "question",
-        text: q.label,
+        text: nextQ.label,
       });
     } else if (nextStep === SUBMIT_STEP) {
       pushMessage({ ...OUTRO, id: `outro-${Date.now()}` });
@@ -422,12 +314,6 @@ export function QuizChat() {
 
     setAgentTyping(false);
     setStep(nextStep);
-  }
-
-  function handleIdentity(twitter: string, wallet: string) {
-    setAnswers((a) => ({ ...a, twitter, wallet }));
-    const combined = `Handle: @${twitter}\nWallet: ${wallet.slice(0, 6)}…${wallet.slice(-4)}`;
-    advance(combined, FIRST_Q_STEP);
   }
 
   function handleAnswer(text: string) {
@@ -443,13 +329,8 @@ export function QuizChat() {
       : null;
 
   const progress =
-    step === IDENTITY_STEP
-      ? "Identity"
-      : step > LAST_Q_STEP
-        ? "Submitting"
-        : `Question ${step} / ${QUIZ_QUESTIONS.length}`;
+    step > LAST_Q_STEP ? "Submitting" : `Question ${step} / ${QUIZ_QUESTIONS.length}`;
 
-  // Success state after server action resolves.
   if (serverState.status === "success") {
     return (
       <div
@@ -496,14 +377,14 @@ export function QuizChat() {
         </div>
       </div>
 
-      {/* Chat log */}
       <div
         ref={scrollRef}
         className="flex max-h-[56vh] flex-col gap-5 overflow-y-auto pr-2 md:max-h-[60vh]"
       >
         {messages.map((m) => {
           if (m.role === "agent") {
-            const italic = m.kind === "intro" || m.kind === "reply" || m.kind === "outro";
+            const italic =
+              m.kind === "intro" || m.kind === "reply" || m.kind === "outro";
             return (
               <AgentBubble key={m.id}>
                 <div
@@ -528,11 +409,8 @@ export function QuizChat() {
         ) : null}
       </div>
 
-      {/* Input — changes per step. Hidden while agent is typing. */}
       <div className="mt-2">
-        {agentTyping ? null : step === IDENTITY_STEP ? (
-          <IdentityInput onSubmit={handleIdentity} disabled={pending} />
-        ) : currentQ ? (
+        {agentTyping ? null : currentQ ? (
           <AnswerComposer
             key={currentQ.id}
             question={currentQ}
@@ -561,7 +439,9 @@ export function QuizChat() {
         </div>
       ) : null}
 
-      {/* Hidden form — populated from state, submitted once at the very end. */}
+      {/* Hidden form — populated from state, submitted once at the very end.
+          Wallet + twitter come from the server-side session (authenticated
+          via SIWE + X OAuth), so they're intentionally not in this form. */}
       <form ref={formRef} action={formAction} className="hidden">
         <input
           name={HONEYPOT_FIELD}
@@ -571,8 +451,6 @@ export function QuizChat() {
           defaultValue=""
         />
         <input type="hidden" name={TIMESTAMP_FIELD} value={openedAt} />
-        <input type="hidden" name="twitter" value={answers.twitter ?? ""} />
-        <input type="hidden" name="wallet" value={answers.wallet ?? ""} />
         {QUIZ_QUESTIONS.map((q) => (
           <input
             key={q.id}
@@ -582,12 +460,6 @@ export function QuizChat() {
           />
         ))}
       </form>
-
-      {/* Cosmetic reference to limits import so bundler keeps it warm.
-          (Used implicitly by the schema + server action.) */}
-      <span className="hidden" aria-hidden="true">
-        {QUIZ_LIMITS.wallet.min}
-      </span>
     </div>
   );
 }
