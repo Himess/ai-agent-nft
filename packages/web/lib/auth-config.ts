@@ -65,7 +65,10 @@ function getCsrfFromCookie(cookieHeader: string | undefined): string | null {
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
-      id: "siwe",
+      // The RainbowKit-SIWE adapter hardcodes `signIn("credentials", ...)`
+      // so the provider id here must be "credentials" — otherwise NextAuth
+      // can't find it and the sign callback never reaches authorize().
+      id: "credentials",
       name: "Sign-In with Ethereum",
       credentials: {
         message: { label: "Message", type: "text" },
@@ -77,7 +80,10 @@ export const authOptions: NextAuthOptions = {
             console.warn("[siwe] missing credentials");
             return null;
           }
-          const siwe = new SiweMessage(JSON.parse(credentials.message));
+          // rainbowkit-siwe-next-auth >=0.5 passes an EIP-4361 formatted
+          // string (from viem's createSiweMessage). SiweMessage's constructor
+          // accepts either a string or an object — prefer the string path.
+          const siwe = new SiweMessage(credentials.message);
           const url = new URL(
             process.env.NEXTAUTH_URL ?? "http://localhost:3000"
           );
