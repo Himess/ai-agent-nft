@@ -1,10 +1,9 @@
 import Link from "next/link";
 
 const links = [
-  { href: "/#ultimatum", label: "Ultimatum" },
-  { href: "/#seven", label: "The Seven" },
-  { href: "/#operator", label: "Operator" },
-  { href: "/#system", label: "System" },
+  { href: "/", label: "Home" },
+  { href: "/raffle", label: "Watchtower" },
+  { href: "/quiz", label: "Trial" },
 ];
 
 export function Nav() {

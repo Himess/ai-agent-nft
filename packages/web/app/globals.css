@@ -5,6 +5,7 @@
   --color-surv-ash: #2B2B2B;
   --color-surv-bone: #E8E4DC;
   --color-surv-crimson: #7A0F14;
+  --color-surv-crimson-soft: #E8A0A4;
   --color-surv-gold: #8C7A4F;
   --color-surv-indigo: #1C2233;
 
@@ -21,11 +22,13 @@ body {
   color: var(--color-surv-bone);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 h1, h2, h3 {
   font-family: var(--font-display);
   font-weight: 500;
+  line-height: 1.08;
 }
 
 ::selection {
@@ -35,4 +38,41 @@ h1, h2, h3 {
 
 .gold-border {
   border-color: rgba(140, 122, 79, 0.24);
+}
+
+/* ═══ Motion primitives (Preset B) ══════════════════════════════════ */
+
+/* Gold breathing pulse — used on the "Signal live" dot in hero + operator. */
+@keyframes surv-pulse-gold {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(140, 122, 79, 0.55); }
+  50%      { box-shadow: 0 0 0 8px rgba(140, 122, 79, 0); }
+}
+
+/* Horizontal marquee of ritual phrases between hero and manifesto. */
+@keyframes surv-marquee {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(-50%, 0, 0); }
+}
+
+/* Slow ambient pulse used on SEALED cards so they feel alive. */
+@keyframes surv-sealed-pulse {
+  0%, 100% { opacity: 0.55; }
+  50%      { opacity: 1; }
+}
+
+/* Scroll-reveal: fade + rise when entering viewport (IntersectionObserver triggers). */
+.surv-reveal {
+  opacity: 0;
+  transform: translate3d(0, 24px, 0);
+  transition: opacity 800ms cubic-bezier(0.16, 1, 0.3, 1),
+              transform 800ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.surv-reveal.is-revealed {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .surv-reveal { opacity: 1 !important; transform: none !important; transition: none !important; }
+  [data-surv-marquee] { animation: none !important; }
 }
