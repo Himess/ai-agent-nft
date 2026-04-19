@@ -274,7 +274,7 @@ function Gate({
           <div className="grid gap-3">
             <GateRow
               icon={<IconX />}
-              name="Follow @TheSeventh_xyz on X"
+              name="Follow @survivorsoneth on X"
               state={gate.x}
               onVerify={() => onVerify("x")}
             />

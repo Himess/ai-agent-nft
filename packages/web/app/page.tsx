@@ -838,9 +838,9 @@ export default function Home() {
                 className="text-[13px] leading-8"
                 style={{ color: "rgba(255,255,255,.72)" }}
               >
-                <div>X · @TheSeventh_xyz</div>
-                <div>Discord Order</div>
-                <div>Telegram Watchtower</div>
+                <div>Collection · @survivorsoneth</div>
+                <div>Agent · @ashborn_agent</div>
+                <div>Discord Order · Telegram Watchtower</div>
               </div>
             </div>
             <div>

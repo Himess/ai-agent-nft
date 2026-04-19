@@ -31,10 +31,10 @@ interface TaskSeed {
 
 const TASKS: TaskSeed[] = [
   {
-    slug: "follow-theseventh",
+    slug: "follow-collection",
     kind: "follow",
-    target_handle: "TheSeventh_xyz",
-    title: "Follow @TheSeventh_xyz on X",
+    target_handle: "survivorsoneth",
+    title: "Follow @survivorsoneth on X",
     description: "The gate. Required before any other task counts.",
     points: 100,
     active: true,

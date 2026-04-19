@@ -163,7 +163,7 @@ Sections:
 1. **Hero** — title "THE TRIAL" or "THE WATCHTOWER", one-line oath,
    small countdown pill ("closes in 6d 12h").
 2. **Gate panel** — three vertical rows:
-   - Follow `@TheSeventh_xyz` on X
+   - Follow `@survivorsoneth` on X (collection) — agent engagement at `@ashborn_agent` awards bonus points separately
    - Join the Discord Order
    - Join the Telegram Watchtower
    Each row: muted dot (locked) or gold dot (verified), name,
