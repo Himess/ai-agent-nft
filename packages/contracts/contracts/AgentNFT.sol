@@ -3,16 +3,16 @@ pragma solidity ^0.8.17;
 
 import { ERC721SeaDrop } from "seadrop/ERC721SeaDrop.sol";
 
-/// @title SurvivorsNFT — SURVIVORS collection, guided by the autonomous agent "The Seventh"
-/// @notice 888 supply ERC-721 + ERC-2981 on top of OpenSea SeaDrop. Public + presale stages
+/// @title SurvivorsNFT — SURVIVORS collection, guided by the autonomous agent "Ashborn"
+/// @notice 1111 supply ERC-721 + ERC-2981 on top of OpenSea SeaDrop. Public + presale stages
 ///         (GTD / FCFS) are configured on the SeaDrop contract via `updatePublicDrop` and
-///         `updateAllowList`. A fixed 88-token reserved allocation is mintable by the owner
-///         for the team vault.
+///         `updateAllowList`. A fixed 100-token reserved allocation is mintable by the owner
+///         for the team / vault.
 /// @dev    ERC721SeaDrop uses ERC721A and starts token IDs at 1. The max supply must be
-///         explicitly set after deploy via `setMaxSupply(888)` (inherited from
+///         explicitly set after deploy via `setMaxSupply(1111)` (inherited from
 ///         ERC721ContractMetadata).
 contract AgentNFT is ERC721SeaDrop {
-    uint256 public constant RESERVED_ALLOCATION = 88;
+    uint256 public constant RESERVED_ALLOCATION = 100;
 
     uint256 public reservedMinted;
 

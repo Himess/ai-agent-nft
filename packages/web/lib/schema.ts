@@ -76,7 +76,7 @@ export const QUESTIONS = [
     id: "offering",
     label: "What do you carry that belongs in an order like this?",
     type: "textarea",
-    placeholder: "Skill, presence, temperament — what you bring.",
+    placeholder: "Skill, presence, temperament. What you bring.",
     min: LIMITS.offering.min,
     max: LIMITS.offering.max,
     required: true,

@@ -9,7 +9,7 @@ export const SEADROP_ADDRESS = "0x00005EA00Ac477B1030CE78506496e8C2dE24bf5";
 export const OS_FEE_RECIPIENT = "0x0000a26b00c1F0DF003000390027140000fAa719";
 
 // ─── Mint economics ──────────────────────────────────────────────
-// Team vault is free, owner-minted via `reservedMint` (88 tokens).
+// Team vault is free, owner-minted via `reservedMint` (100 tokens).
 // Everyone else pays through SeaDrop at these prices.
 export const GTD_PRICE = ethers.parseEther("0.0035");
 export const FCFS_PRICE = ethers.parseEther("0.0045");
@@ -24,27 +24,34 @@ export const FEE_BPS = 1000;
 export const MAX_PER_WALLET = 1;
 
 // ─── Supply per stage ────────────────────────────────────────────
-// Not strictly enforced on-chain per stage (only MAX_SUPPLY=888 is), but
+// Not strictly enforced on-chain per stage (only MAX_SUPPLY=1111 is), but
 // useful as upper bounds in stage configs via `maxTokenSupplyForStage`
 // and for the off-chain allowlist merge/validation step.
-export const MAX_SUPPLY = 888;
+export const MAX_SUPPLY = 1111;
 
 // ─── Allocation caps per WL source ───────────────────────────────
 // Hard limits enforced in `scripts/build-allowlists.ts` when the per-source
 // lists are merged into the final GTD + FCFS merkle trees. If any source
 // file exceeds its cap, the merge script refuses to run.
 //
-// Totals (2026-04-18 plan):
-//   GTD  — team 88 + quiz 100 + app 200 + social 100 + collab 100 + yan 100 + agent 50 = 738
-//   FCFS —              quiz 100                     + social 100 + collab 100         + agent 50 = 350
+// Supply budget (1111):
+//   Reserved (owner-minted via reservedMint):                      100
+//   GTD allowlist (paid 0.0035 ETH, 1 per wallet):                 970
+//     quiz 200 + app 450 + collab 100 + yan 120 + agent 50 + collection 50
+//   FCFS allowlist (paid 0.0045 ETH, 1 per wallet, after GTD):     300
+//     quiz 100 + collab 100 + agent 50 + collection 50
+//   Potential allocated: 100 + 970 + 300 = 1370 (oversubscribed ~23%, normal attrition).
+//   The on-chain MAX_SUPPLY=1111 is the hard cap; whoever mints first wins.
+//
+// Social tasks (previous plan) are dropped in favour of agent/collection Twitter giveaways.
 export const ALLOCATION_CAPS = {
-  team:   { gtd: 88,  fcfs: 0 },   // reservedMint (owner-only)
-  quiz:   { gtd: 100, fcfs: 100 }, // agent-scored quiz on the site
-  app:    { gtd: 200, fcfs: 0 },   // agent-scored /apply submissions
-  social: { gtd: 100, fcfs: 100 }, // site leaderboard (top N → GTD, raffle → FCFS)
-  collab: { gtd: 100, fcfs: 100 }, // partner collections / community deals
-  yan:    { gtd: 100, fcfs: 0 },   // team-held alt wallets (not revealed on-chain)
-  agent:  { gtd: 50,  fcfs: 50 },  // agent-run Twitter giveaway (curation + raffle)
+  team:       { gtd: 0,   fcfs: 0   }, // reservedMint 100 (owner-only, not allowlist)
+  quiz:       { gtd: 200, fcfs: 100 }, // agent-scored quiz on the site
+  app:        { gtd: 450, fcfs: 0   }, // agent-scored /apply submissions
+  collab:     { gtd: 100, fcfs: 100 }, // partner collections / community deals
+  yan:        { gtd: 120, fcfs: 0   }, // team-held alt wallets
+  agent:      { gtd: 50,  fcfs: 50  }, // @ashborn_agent Twitter picks + giveaway
+  collection: { gtd: 50,  fcfs: 50  }, // @survivorsoneth official Twitter picks + giveaway
 } as const;
 
 export const TOTAL_GTD = Object.values(ALLOCATION_CAPS).reduce((a, c) => a + c.gtd, 0);

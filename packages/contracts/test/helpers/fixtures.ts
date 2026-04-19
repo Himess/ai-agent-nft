@@ -3,8 +3,8 @@ import type { MintParams } from "../../config/drop-config";
 
 export const MINT_PRICE = ethers.parseEther("0.01");
 export const ROYALTY_BPS = 500n; // 5%
-export const MAX_SUPPLY = 888n;
-export const RESERVED_ALLOCATION = 88n;
+export const MAX_SUPPLY = 1111n;
+export const RESERVED_ALLOCATION = 100n;
 
 // Canonical cross-chain SeaDrop address (mainnet + Sepolia).
 export const SEADROP_PLACEHOLDER =

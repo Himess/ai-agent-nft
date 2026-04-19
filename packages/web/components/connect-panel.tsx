@@ -13,14 +13,14 @@ const COPY = {
     eyebrow: "The Gate",
     title: "Connect your wallet first.",
     body:
-      "Ownership has to be proven before you step inside. Sign the message — no funds move, no approvals granted. Only the signature, held by us as your mark.",
+      "Ownership has to be proven before you step inside. Sign the message. No funds move, no approvals granted. Only the signature, held by us as your mark.",
     hint: "The wallet you sign with is the wallet that mints later.",
   },
   twitter: {
     eyebrow: "The Gate",
     title: "Now link your X account.",
     body:
-      "Social signal matters. Bind the X account that carries your presence to the wallet you just signed with. The Seventh reads the link; you cannot rewrite it later.",
+      "Social signal matters. Bind the X account that carries your presence to the wallet you just signed with. Ashborn reads the link. You cannot rewrite it later.",
     hint: "One X account. One wallet. Permanent binding.",
   },
 } as const;

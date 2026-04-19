@@ -13,7 +13,7 @@ async function main() {
   const isLiveNetwork = network.chainId === 1n || network.chainId === 11155111n;
 
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-  console.log("  SURVIVORS — Full Deployment (agent: The Seventh)");
+  console.log("  SURVIVORS  Full Deployment (agent: Ashborn)");
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
   console.log(`  Network:  ${network.name} (chainId: ${network.chainId})`);
   console.log(`  Deployer: ${deployer.address}`);
@@ -21,7 +21,7 @@ async function main() {
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
 
   // ── Config ────────────────────────────────────────────────────
-  const MAX_SUPPLY = 888n;
+  const MAX_SUPPLY = 1111n;
   const ROYALTY_BPS = 500; // 5%
   const MAX_PER_TX = ethers.parseEther("0.1");
   const MAX_DAILY = ethers.parseEther("0.3");
@@ -51,12 +51,12 @@ async function main() {
   console.log(`     SurvivorsNFT: ${await nft.getAddress()}\n`);
 
   // ── Step 3: Set max supply (must happen before any mint) ──────
-  console.log("3/9  Setting max supply to 888...");
+  console.log("3/9  Setting max supply to 1111...");
   await (await nft.setMaxSupply(MAX_SUPPLY)).wait();
   console.log(`     maxSupply = ${MAX_SUPPLY}\n`);
 
   // ── Step 4: Reserved-mint the agent NFT (token #1) ────────────
-  console.log("4/9  Minting Agent NFT (token #1) — The Seventh vault seat...");
+  console.log("4/9  Minting Agent NFT (token #1): Ashborn vault seat...");
   await (await nft.reservedMint(deployer.address, 1)).wait();
   console.log(`     Token #1 minted to ${deployer.address}\n`);
 
@@ -119,7 +119,7 @@ async function main() {
   console.log("9/9  Registering Agent Identity...");
   await (
     await identity.registerAgent(
-      "The Seventh",
+      "Ashborn",
       "ipfs://TODO", // Replace with actual IPFS URI
       await agentAccount.getAddress()
     )

@@ -17,9 +17,9 @@ const CARD_BLACK = "rgba(10,10,10,.56)";
 // "reflect" on heavy questions (collapse, scroll) and "press" on judgment calls.
 
 const REPLIES = {
-  receive: ["Noted.", "Held.", "Carried.", "Recognized.", "The Seventh reads this."],
-  press:   ["Hmm. And now this —", "One more fragment.", "Turn.", "Another — sharper.", "Go on."],
-  reflect: ["That carries weight.", "The order remembers.", "Signal — faint, but there.", "Deeper than it looked.", "Kept."],
+  receive: ["Noted.", "Held.", "Carried.", "Recognized.", "Ashborn reads this."],
+  press:   ["Hmm. And now this.", "One more fragment.", "Turn.", "Another, sharper.", "Go on."],
+  reflect: ["That carries weight.", "The order remembers.", "Signal, faint but there.", "Deeper than it looked.", "Kept."],
 } as const;
 
 // Per-question register bias.
@@ -50,7 +50,7 @@ const INTRO: Message = {
   role: "agent",
   kind: "intro",
   text:
-    "The Seventh acknowledges you. Ten questions follow. No scores are revealed. Speak plainly.",
+    "Ashborn acknowledges you. Ten questions follow. No scores are revealed. Speak plainly.",
 };
 
 const OUTRO: Message = {
@@ -89,15 +89,15 @@ function AgentBubble({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex items-start gap-4">
       <div
-        className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border text-[10px] uppercase"
+        className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border text-[11px] uppercase"
         style={{
           borderColor: GOLD,
           color: GOLD,
-          letterSpacing: "0.3em",
+          letterSpacing: "0.2em",
           background: "rgba(10,10,10,.6)",
         }}
       >
-        VII
+        A
       </div>
       <div
         className="max-w-[640px] rounded-2xl rounded-tl-sm border px-5 py-4"
@@ -347,11 +347,11 @@ export function QuizChat() {
           className="mb-4 text-3xl italic md:text-4xl"
           style={{ fontFamily: "var(--font-display)", color: BONE }}
         >
-          The Seventh reads in silence.
+          Ashborn reads in silence.
         </div>
         <p className="mx-auto max-w-xl text-sm leading-7 text-white/65">
           Results are not revealed one by one. Five days before mint, the chosen
-          walk forward. No appeals, no scores, no explanations — only the list.
+          walk forward. No appeals, no scores, no explanations. Only the list.
         </p>
       </div>
     );

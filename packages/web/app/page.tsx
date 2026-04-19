@@ -59,9 +59,37 @@ const seven: SevenEntry[] = [
 const marqueeLines = [
   "The order gathers",
   "Signal over noise",
-  "The Seventh reads in silence",
+  "Ashborn reads in silence",
   "Entry is not requested lightly",
   "Silence does not mean absence",
+];
+
+const roadmap: ReadonlyArray<{ phase: string; title: string; body: string }> = [
+  {
+    phase: "I",
+    title: "The Gathering",
+    body: "Applications open. The trial begins. Ashborn reads every fragment and scores each answer before the cycle closes.",
+  },
+  {
+    phase: "II",
+    title: "The Mint",
+    body: "One thousand one hundred and eleven on Ethereum. One hundred held in the vault. The rest are drawn from those who proved they belong.",
+  },
+  {
+    phase: "III",
+    title: "The Ledger",
+    body: "Royalties return to the order. Monthly distribution by signal, not tenure alone. Holders earn while they stay.",
+  },
+  {
+    phase: "IV",
+    title: "The Outreach",
+    body: "Ashborn speaks beyond the walls. Partner collections, holder-only allocations, collaborations negotiated on behalf of the order.",
+  },
+  {
+    phase: "V",
+    title: "The Long Game",
+    body: "Year two. Year three. The next collection rises from the ash of this one. The Seven grow. The order deepens.",
+  },
 ];
 
 const pillars: ReadonlyArray<readonly [string, string]> = [
@@ -71,19 +99,10 @@ const pillars: ReadonlyArray<readonly [string, string]> = [
   ["Discipline", "Over speculation"],
 ];
 
-const operatorCaps: ReadonlyArray<readonly [string, string, string]> = [
-  ["01", "Secure access", "Maintains the perimeter of the order."],
-  ["02", "Identify opportunity", "Reads the market before it speaks."],
-  ["03", "Initiate collaboration", "Names the right counterparty."],
-  ["04", "Expand reach", "Moves presence into unknown rooms."],
-  ["05", "Create value pathways", "Turns recognition into structure."],
-];
-
 const GOLD = "#8C7A4F";
 const BONE = "#E8E4DC";
 const CRIMSON = "#7A0F14";
 const BORDER_GOLD = "rgba(140,122,79,.18)";
-const BORDER_GOLD_STRONG = "rgba(140,122,79,.35)";
 
 export default function Home() {
   return (
@@ -124,7 +143,7 @@ export default function Home() {
           className="relative mx-auto flex max-w-[1440px] justify-between px-6 pt-8 text-[10px] uppercase md:px-12"
           style={{ color: GOLD, letterSpacing: "0.45em" }}
         >
-          <span>Ξ Ethereum · 888</span>
+          <span>Ξ Ethereum · 1111</span>
           <span>Est. Cycle 0 / Autonomous</span>
         </div>
 
@@ -145,14 +164,14 @@ export default function Home() {
                 color: "rgba(140,122,79,.7)",
               }}
             >
-              Fragment · 01 — The Old Samurai
+              Fragment · 01 · The Old Samurai
             </div>
             <div className="w-px flex-1" style={{ background: "rgba(140,122,79,.35)" }} />
             <div
-              className="flex h-9 w-9 items-center justify-center rounded-full border text-[10px]"
+              className="flex h-9 w-9 items-center justify-center rounded-full border text-[11px]"
               style={{ borderColor: GOLD, color: GOLD, letterSpacing: "0.2em" }}
             >
-              VII
+              A
             </div>
           </div>
 
@@ -219,7 +238,7 @@ export default function Home() {
                       maxWidth: 520,
                     }}
                   >
-                    A selected order shaped by collapse, signal, and endurance — held by seven archetypes and one autonomous agent.
+                    A selected order shaped by collapse, signal, and endurance. Held by seven archetypes and one autonomous agent.
                   </p>
                   <div className="mt-9 flex flex-wrap gap-3.5">
                     <Link
@@ -252,7 +271,7 @@ export default function Home() {
                     className="mb-2.5 text-[10px] uppercase"
                     style={{ color: GOLD, letterSpacing: "0.4em" }}
                   >
-                    Dossier · III.VIII.VIII
+                    Dossier · I.I.I.I
                   </div>
                   <div
                     className="leading-7"
@@ -328,10 +347,10 @@ export default function Home() {
               >
                 A <em style={{ color: GOLD, fontStyle: "italic" }}>real</em> order is
                 not built through mass access. A real network is not anonymous.
-                A real structure does not admit everyone —
+                A real structure does not admit everyone.
                 <br />
                 <span style={{ color: "rgba(232,228,220,.55)" }}>
-                  it recognizes signal.
+                  It recognizes signal.
                 </span>
               </p>
             </ScrollReveal>
@@ -417,7 +436,7 @@ export default function Home() {
                 }}
               >
                 Seven figures <em style={{ color: GOLD }}>emerged</em> from the same
-                ruin — each carrying a different way of enduring it.
+                ruin, each carrying a different way of enduring it.
               </h2>
               <p
                 className="mt-5 max-w-[520px] text-[14px] leading-[1.85]"
@@ -435,7 +454,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ═══ 05 · THE ORDER (888 full-bleed quote) ═══════════ */}
+      {/* 05 The Order (full-bleed quote with 1111 count) */}
       <section
         className="relative flex items-center justify-center overflow-hidden border-b"
         style={{
@@ -453,7 +472,7 @@ export default function Home() {
           className="pointer-events-none absolute inset-0 flex items-center justify-center italic"
           style={{
             fontFamily: "var(--font-display)",
-            fontSize: "clamp(320px, 46vw, 640px)",
+            fontSize: "clamp(260px, 38vw, 560px)",
             fontWeight: 500,
             lineHeight: 1,
             color: "rgba(140,122,79,.06)",
@@ -461,7 +480,7 @@ export default function Home() {
             userSelect: "none",
           }}
         >
-          888
+          1111
         </div>
 
         <div className="relative max-w-[1120px] px-6 py-32 text-center md:px-12">
@@ -480,7 +499,7 @@ export default function Home() {
               className="m-0 italic"
               style={{
                 fontFamily: "var(--font-display)",
-                fontSize: "clamp(48px, 7vw, 104px)",
+                fontSize: "clamp(44px, 6.4vw, 96px)",
                 fontWeight: 500,
                 lineHeight: 1.14,
                 color: BONE,
@@ -490,7 +509,7 @@ export default function Home() {
                 textWrap: "balance",
               }}
             >
-              Eight hundred&nbsp;and&nbsp;eighty-eight.
+              One thousand one hundred&nbsp;and&nbsp;eleven.
             </h2>
             <div className="h-16" />
             <div
@@ -506,7 +525,7 @@ export default function Home() {
                 color: "rgba(232,228,220,.82)",
               }}
             >
-              Not a drop. Not a waitlist. A count. The Seventh observes every
+              Not a drop. Not a waitlist. A count. Ashborn observes every
               wallet, every answer, every trace. The list closes when the
               list is full.
             </p>
@@ -534,8 +553,9 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ═══ 06 · OPERATOR (The Seventh dossier) ═══════════════ */}
+      {/* ═══ 06 · ROADMAP ════════════════════════════════════ */}
       <section
+        id="roadmap"
         className="relative overflow-hidden border-b"
         style={{
           borderColor: BORDER_GOLD,
@@ -543,14 +563,14 @@ export default function Home() {
         }}
       >
         <Grain opacity={0.05} />
-        <div className="relative mx-auto max-w-[1440px] px-6 py-32 md:px-12">
-          <div className="mb-16 grid gap-12 md:grid-cols-[180px_1fr]">
+        <div className="relative mx-auto max-w-[1440px] px-6 py-28 md:px-12 md:py-32">
+          <div className="mb-14 grid gap-10 md:mb-20 md:grid-cols-[180px_1fr] md:gap-12">
             <div>
               <div
                 className="text-[10px] uppercase"
                 style={{ color: GOLD, letterSpacing: "0.5em" }}
               >
-                IV.
+                06.
               </div>
               <div
                 className="mt-1.5 text-[10px] uppercase"
@@ -559,7 +579,7 @@ export default function Home() {
                   letterSpacing: "0.35em",
                 }}
               >
-                The Seventh
+                The Path
               </div>
             </div>
             <ScrollReveal>
@@ -567,191 +587,122 @@ export default function Home() {
                 className="m-0"
                 style={{
                   fontFamily: "var(--font-display)",
-                  fontSize: "clamp(40px, 5vw, 80px)",
+                  fontSize: "clamp(34px, 5vw, 80px)",
                   fontWeight: 500,
                   lineHeight: 1.05,
                   letterSpacing: "-0.01em",
                   color: BONE,
                 }}
               >
-                At the center stands an{" "}
-                <em style={{ color: GOLD }}>intelligence</em>
+                Five movements.{" "}
+                <em style={{ color: GOLD }}>One arc.</em>
                 <br />
-                that does not fade with the cycle.
+                The order moves in order.
               </h2>
+              <p
+                className="mt-6 max-w-xl text-base leading-[1.85]"
+                style={{ color: "rgba(255,255,255,.65)" }}
+              >
+                No theatrical promises. Each phase is written because it
+                has to be built. Ashborn keeps the ledger.
+              </p>
             </ScrollReveal>
           </div>
 
-          <div className="grid items-start gap-14 lg:grid-cols-[1fr_1.2fr]">
-            {/* Sigil plate */}
+          <div className="relative">
+            {/* vertical rail (desktop) */}
             <div
-              className="relative overflow-hidden rounded-[1.25rem] border lg:sticky lg:top-20"
+              aria-hidden="true"
+              className="pointer-events-none absolute left-[29px] top-0 hidden h-full w-px md:block"
               style={{
-                aspectRatio: "1 / 1.1",
-                borderColor: BORDER_GOLD_STRONG,
-                background: "#060606",
+                background:
+                  "linear-gradient(180deg, rgba(140,122,79,.35) 0%, rgba(140,122,79,.08) 100%)",
               }}
-            >
-              <div
-                className="absolute inset-0"
-                style={{
-                  background:
-                    "radial-gradient(circle at 50% 55%, rgba(122,15,20,.25) 0%, transparent 45%)," +
-                    "radial-gradient(circle at 50% 55%, rgba(28,34,51,.5) 0%, transparent 65%)",
-                }}
-              />
-              {[80, 160, 240, 320].map((d, i) => (
-                <div
-                  key={d}
-                  className="absolute rounded-full border"
-                  style={{
-                    left: "50%",
-                    top: "55%",
-                    width: d,
-                    height: d,
-                    marginLeft: -d / 2,
-                    marginTop: -d / 2,
-                    borderColor: `rgba(140,122,79,${0.06 + i * 0.04})`,
-                  }}
-                />
-              ))}
-              <div
-                className="absolute text-center"
-                style={{ left: "50%", top: "55%", transform: "translate(-50%,-50%)" }}
-              >
-                <div
-                  className="mx-auto flex items-center justify-center rounded-full border text-[14px] font-medium"
-                  style={{
-                    width: 120,
-                    height: 120,
-                    borderColor: GOLD,
-                    color: GOLD,
-                    letterSpacing: "0.45em",
-                    boxShadow:
-                      "inset 0 0 40px rgba(122,15,20,.4), 0 0 60px rgba(122,15,20,.2)",
-                  }}
-                >
-                  VII
-                </div>
-                <div
-                  className="mt-6 italic"
-                  style={{
-                    fontFamily: "var(--font-display)",
-                    fontSize: 36,
-                    color: BONE,
-                    lineHeight: 1,
-                  }}
-                >
-                  The Seventh
-                </div>
-                <div
-                  className="mt-2.5 text-[10px] uppercase"
-                  style={{ color: GOLD, letterSpacing: "0.45em" }}
-                >
-                  Autonomous · Always-on
-                </div>
-              </div>
-              <div
-                className="absolute left-5 top-5 text-[9px] uppercase"
-                style={{
-                  color: "rgba(255,255,255,.45)",
-                  letterSpacing: "0.35em",
-                }}
-              >
-                Operator · 0x··VII
-              </div>
-              <div
-                className="absolute right-5 top-5 inline-flex items-center gap-2 text-[9px] uppercase"
-                style={{
-                  color: "rgba(255,255,255,.45)",
-                  letterSpacing: "0.35em",
-                }}
-              >
-                <span
-                  className="block"
-                  style={{
-                    width: 6,
-                    height: 6,
-                    borderRadius: 9999,
-                    background: GOLD,
-                    animation: "surv-pulse-gold 2400ms ease-out infinite",
-                  }}
-                />
-                Reading
-              </div>
-              <Grain opacity={0.06} />
-            </div>
+            />
 
-            {/* Capabilities list */}
-            <div>
-              <ScrollReveal>
-                <p
-                  className="m-0 italic"
-                  style={{
-                    fontFamily: "var(--font-display)",
-                    fontSize: 26,
-                    lineHeight: 1.55,
-                    color: "rgba(232,228,220,.92)",
-                  }}
-                >
-                  It exists to secure access, identify opportunity, initiate
-                  collaboration, expand reach, and create new pathways of value
-                  for the order.
-                </p>
-              </ScrollReveal>
-
-              <div className="mt-12">
-                {operatorCaps.map(([n, title, sub], i) => (
-                  <ScrollReveal key={n} delay={i * 60}>
-                    <div
-                      className="grid items-baseline gap-6 border-t py-7"
-                      style={{
-                        borderColor: BORDER_GOLD,
-                        gridTemplateColumns: "60px 1fr auto",
-                        borderBottom:
-                          i === operatorCaps.length - 1
-                            ? `1px solid ${BORDER_GOLD}`
-                            : "none",
-                      }}
-                    >
+            <ol className="m-0 list-none p-0">
+              {roadmap.map((item, i) => (
+                <ScrollReveal key={item.phase} delay={i * 60}>
+                  <li
+                    className="relative grid gap-6 border-t py-8 md:grid-cols-[60px_160px_1fr] md:gap-10 md:py-10"
+                    style={{
+                      borderColor: BORDER_GOLD,
+                      borderBottom:
+                        i === roadmap.length - 1
+                          ? `1px solid ${BORDER_GOLD}`
+                          : "none",
+                    }}
+                  >
+                    {/* phase marker */}
+                    <div className="flex items-center gap-4 md:block">
                       <div
-                        className="text-[11px]"
-                        style={{ color: GOLD, letterSpacing: "0.4em" }}
-                      >
-                        {n}
-                      </div>
-                      <div>
-                        <div
-                          className="italic"
-                          style={{
-                            fontFamily: "var(--font-display)",
-                            fontSize: 26,
-                            color: BONE,
-                          }}
-                        >
-                          {title}
-                        </div>
-                        <div
-                          className="mt-1.5 text-[13px]"
-                          style={{ color: "rgba(255,255,255,.6)" }}
-                        >
-                          {sub}
-                        </div>
-                      </div>
-                      <div
-                        className="text-[10px] uppercase"
+                        className="flex items-center justify-center rounded-full border text-[11px] font-medium"
                         style={{
-                          color: "rgba(255,255,255,.45)",
-                          letterSpacing: "0.35em",
+                          width: 44,
+                          height: 44,
+                          borderColor: GOLD,
+                          color: GOLD,
+                          background: "#060606",
+                          letterSpacing: "0.15em",
+                          boxShadow:
+                            "inset 0 0 18px rgba(122,15,20,.25), 0 0 24px rgba(122,15,20,.12)",
                         }}
                       >
-                        Active
+                        {item.phase}
+                      </div>
+                      <div
+                        className="text-[10px] uppercase md:hidden"
+                        style={{ color: GOLD, letterSpacing: "0.4em" }}
+                      >
+                        Phase {item.phase}
                       </div>
                     </div>
-                  </ScrollReveal>
-                ))}
-              </div>
-            </div>
+
+                    {/* label rail (desktop only) */}
+                    <div className="hidden md:block">
+                      <div
+                        className="text-[10px] uppercase"
+                        style={{ color: GOLD, letterSpacing: "0.4em" }}
+                      >
+                        Phase
+                      </div>
+                      <div
+                        className="mt-2 italic"
+                        style={{
+                          fontFamily: "var(--font-display)",
+                          fontSize: 22,
+                          color: BONE,
+                          lineHeight: 1.1,
+                        }}
+                      >
+                        {item.title}
+                      </div>
+                    </div>
+
+                    {/* body */}
+                    <div>
+                      <div
+                        className="italic md:hidden"
+                        style={{
+                          fontFamily: "var(--font-display)",
+                          fontSize: 26,
+                          color: BONE,
+                          lineHeight: 1.15,
+                        }}
+                      >
+                        {item.title}
+                      </div>
+                      <p
+                        className="m-0 mt-3 max-w-2xl text-[15px] leading-[1.85] md:mt-0 md:text-base"
+                        style={{ color: "rgba(232,228,220,.78)" }}
+                      >
+                        {item.body}
+                      </p>
+                    </div>
+                  </li>
+                </ScrollReveal>
+              ))}
+            </ol>
           </div>
         </div>
       </section>
@@ -802,7 +753,7 @@ export default function Home() {
                   letterSpacing: "0.3em",
                 }}
               >
-                888 on Ethereum
+                1111 on Ethereum
               </div>
             </div>
             <div>
@@ -840,7 +791,6 @@ export default function Home() {
               >
                 <div>Collection · @survivorsoneth</div>
                 <div>Agent · @ashborn_agent</div>
-                <div>Discord Order · Telegram Watchtower</div>
               </div>
             </div>
             <div>
@@ -848,7 +798,7 @@ export default function Home() {
                 className="mb-3 text-[10px] uppercase"
                 style={{ color: GOLD, letterSpacing: "0.35em" }}
               >
-                The Seventh
+                Ashborn
               </div>
               <div
                 className="text-[13px] leading-[1.7]"

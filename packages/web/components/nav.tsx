@@ -41,7 +41,7 @@ export function Nav() {
               SURVIVORS
             </div>
             <div className="text-[10px] uppercase tracking-[0.32em] text-white/50">
-              888 on Ethereum
+              1111 on Ethereum
             </div>
           </div>
         </Link>

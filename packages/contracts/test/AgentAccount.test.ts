@@ -17,7 +17,7 @@ async function deployAgentAccount() {
     "0x00005EA00Ac477B1030CE78506496e8C2dE24bf5", // canonical SeaDrop placeholder
   ]);
   await mockNFT.waitForDeployment();
-  await mockNFT.setMaxSupply(888);
+  await mockNFT.setMaxSupply(1111);
 
   // Mint token #1 to nftOwner (ERC721A token IDs start at 1)
   await mockNFT.reservedMint(nftOwner.address, 1);
@@ -218,7 +218,7 @@ describe("AgentAccount", function () {
       const nft = await mockNFT.deploy("Test2", "TST2", [
         "0x00005EA00Ac477B1030CE78506496e8C2dE24bf5",
       ]);
-      await nft.setMaxSupply(888);
+      await nft.setMaxSupply(1111);
       await nft.reservedMint(nftOwner.address, 1);
 
       const account2 = await AgentAccount.deploy(
@@ -470,7 +470,7 @@ describe("AgentAccount", function () {
       const nft = await mockNFT.deploy("T", "T", [
         "0x00005EA00Ac477B1030CE78506496e8C2dE24bf5",
       ]);
-      await nft.setMaxSupply(888);
+      await nft.setMaxSupply(1111);
       await nft.reservedMint(nftOwner.address, 1);
 
       const acc = await AgentAccount.deploy(

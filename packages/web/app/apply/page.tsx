@@ -5,7 +5,7 @@ import { AuthGate } from "@/components/auth-gate";
 import { ApplicationForm } from "./application-form";
 
 export const metadata: Metadata = {
-  title: "Applications — SURVIVORS",
+  title: "Applications · SURVIVORS",
   description: "Entry is not requested lightly. This is a filter.",
 };
 

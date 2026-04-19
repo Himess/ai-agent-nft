@@ -85,7 +85,7 @@ CREATE TABLE IF NOT EXISTS task_completions (
 CREATE INDEX IF NOT EXISTS task_completions_wallet_idx ON task_completions(wallet);
 CREATE INDEX IF NOT EXISTS task_completions_pending_idx ON task_completions(queued_at) WHERE status = 'pending';
 
--- 5. Agent engagement bonuses — when The Seventh likes/RTs/replies to a user's tweet.
+-- 5. Agent engagement bonuses when Ashborn likes/RTs/replies to a user's tweet.
 CREATE TABLE IF NOT EXISTS agent_engagements (
   id             BIGSERIAL PRIMARY KEY,
   wallet         TEXT NOT NULL REFERENCES user_profiles(wallet) ON DELETE CASCADE,

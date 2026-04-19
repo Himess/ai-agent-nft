@@ -16,22 +16,6 @@ function IconX({ size = 22 }: { size?: number }) {
   );
 }
 
-function IconDiscord({ size = 22 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 32 32" fill="none" aria-hidden="true">
-      <path fill="currentColor" d="M27.1 7.4A23.3 23.3 0 0 0 21.3 5.6l-.3.3a17.2 17.2 0 0 0-1 2.1 21.7 21.7 0 0 0-6.5 0 15 15 0 0 0-1-2.1l-.3-.3A23.3 23.3 0 0 0 6.4 7.4C3.2 12.1 2.3 16.6 2.7 21A23.4 23.4 0 0 0 9.8 24.7l.4-.2a16.8 16.8 0 0 0 1.5-2.4 15 15 0 0 1-2.3-1.1l.5-.4a16.7 16.7 0 0 0 14.5 0l.5.4a15 15 0 0 1-2.3 1.1 16.8 16.8 0 0 0 1.5 2.4l.4.2A23.3 23.3 0 0 0 30.8 21c.5-5.1-.7-9.6-3.7-13.6zM11.8 18.4c-1.4 0-2.5-1.3-2.5-2.9s1.1-2.9 2.5-2.9 2.5 1.3 2.5 2.9-1.1 2.9-2.5 2.9zm9.8 0c-1.4 0-2.5-1.3-2.5-2.9s1.1-2.9 2.5-2.9 2.5 1.3 2.5 2.9-1.1 2.9-2.5 2.9z" />
-    </svg>
-  );
-}
-
-function IconTelegram({ size = 22 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 32 32" fill="none" aria-hidden="true">
-      <path fill="currentColor" d="M16 2C8.3 2 2 8.3 2 16s6.3 14 14 14 14-6.3 14-14S23.7 2 16 2zm6.5 9.6l-2.2 10.2c-.2.7-.6.9-1.2.6l-3.3-2.5-1.6 1.5c-.2.2-.3.3-.7.3l.2-3.4 6.2-5.6c.3-.3-.1-.4-.4-.2l-7.7 4.8-3.3-1c-.7-.2-.7-.7.2-1l12.9-5c.6-.2 1.1.1.9.9z" />
-    </svg>
-  );
-}
-
 const GOLD = "#8C7A4F";
 const BONE = "#E8E4DC";
 const CRIMSON = "#7A0F14";
@@ -329,7 +313,7 @@ function Status({
                   color: BONE,
                 }}
               >
-                {locked ? "—" : points.toLocaleString()}
+                {locked ? "···" : points.toLocaleString()}
               </div>
             </div>
             <div>
@@ -344,7 +328,7 @@ function Status({
                   color: BONE,
                 }}
               >
-                {locked ? "—" : `#${rank}`}
+                {locked ? "···" : `#${rank}`}
                 <span
                   className="ml-1.5 text-[18px]"
                   style={{ color: "rgba(255,255,255,.45)" }}
@@ -635,7 +619,7 @@ const initialTasks: Task[] = [
   { id: "invite", name: "Invite one survivor", points: 500, state: "completed" },
   { id: "bio", name: "Pin the oath in your bio", points: 150, state: "not_started" },
   { id: "thread", name: "Write a thread on signal", points: 400, state: "not_started" },
-  { id: "reply", name: "Reply to The Seventh", points: 80, state: "completed" },
+  { id: "reply", name: "Reply to Ashborn", points: 80, state: "completed" },
 ];
 
 const leaderboardRows = [

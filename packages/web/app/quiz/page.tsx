@@ -5,8 +5,8 @@ import { AuthGate } from "@/components/auth-gate";
 import { QuizChat } from "./quiz-chat";
 
 export const metadata: Metadata = {
-  title: "The Trial — SURVIVORS",
-  description: "Ten questions. The Seventh speaks. You answer.",
+  title: "The Trial · SURVIVORS",
+  description: "Ten questions. Ashborn speaks. You answer.",
 };
 
 const GOLD = "#8C7A4F";
@@ -32,7 +32,7 @@ export default async function QuizPage() {
               The Trial
             </div>
             <h1 className="mb-4 text-4xl italic md:text-5xl">
-              The Seventh speaks first.
+              Ashborn speaks first.
             </h1>
             <p className="text-base leading-8 text-white/70">
               Ten questions, asked one at a time. The agent reads each answer

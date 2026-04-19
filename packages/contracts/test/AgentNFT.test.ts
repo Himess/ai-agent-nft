@@ -77,11 +77,10 @@ describe("AgentNFT (SURVIVORS on SeaDrop)", function () {
 
     it("should revert when exceeding RESERVED_ALLOCATION", async function () {
       const { nft, owner } = await loadFixture(deployAgentNFT);
-      // Mint up to RESERVED_ALLOCATION (88) in chunks of 20
-      for (let i = 0; i < 4; i++) {
-        await nft.connect(owner).reservedMint(owner.address, 20); // 80
+      // Mint up to RESERVED_ALLOCATION (100) in chunks of 20
+      for (let i = 0; i < 5; i++) {
+        await nft.connect(owner).reservedMint(owner.address, 20); // 100 total
       }
-      await nft.connect(owner).reservedMint(owner.address, 8); // 88 total
       expect(await nft.reservedMinted()).to.equal(RESERVED_ALLOCATION);
 
       await expect(

@@ -2,7 +2,7 @@ import { expect } from "chai";
 import { ethers } from "hardhat";
 import { loadFixture, time } from "@nomicfoundation/hardhat-network-helpers";
 
-const MAX_SUPPLY = 888n;
+const MAX_SUPPLY = 1111n;
 const ROYALTY_BPS = 500; // 5%
 const MAX_PER_TX = ethers.parseEther("0.1");
 const MAX_DAILY = ethers.parseEther("0.3");

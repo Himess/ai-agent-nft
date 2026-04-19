@@ -14,7 +14,7 @@ import {
 import { wagmiConfig } from "@/lib/wagmi";
 
 const getSiweMessageOptions: GetSiweMessageOptions = () => ({
-  statement: "Sign in to SURVIVORS — the order gathers.",
+  statement: "Sign in to SURVIVORS. The order gathers.",
 });
 
 export function Providers({

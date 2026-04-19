@@ -19,18 +19,18 @@ const cormorant = Cormorant_Garamond({
 });
 
 export const metadata: Metadata = {
-  title: "SURVIVORS — 888 on Ethereum",
+  title: "SURVIVORS · 1111 on Ethereum",
   description:
     "A selected order shaped by collapse, signal, and endurance. When every NFT died, we lived.",
   openGraph: {
     title: "SURVIVORS",
-    description: "When every NFT died, we lived. 888 on Ethereum.",
+    description: "When every NFT died, we lived. 1111 on Ethereum.",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
     title: "SURVIVORS",
-    description: "When every NFT died, we lived. 888 on Ethereum.",
+    description: "When every NFT died, we lived. 1111 on Ethereum.",
   },
   robots: {
     index: false,

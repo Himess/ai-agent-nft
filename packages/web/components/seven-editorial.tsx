@@ -156,7 +156,7 @@ export function SevenEditorial({ entries }: { entries: SevenEntry[] }) {
           >
             {(
               [
-                ["Fragment", `0${current.index + 1} / VII`],
+                ["Fragment", `0${current.index + 1} / 07`],
                 ["Archetype", isRevealed ? current.title : "Sealed"],
                 ["Status", isRevealed ? "Revealed" : "Awaiting cycle"],
                 ["Signal", isRevealed ? "Observed" : "Pending"],
@@ -191,7 +191,7 @@ export function SevenEditorial({ entries }: { entries: SevenEntry[] }) {
             letterSpacing: "0.35em",
           }}
         >
-          The Seventh reads every fragment before the list is drawn.
+          Ashborn reads every fragment before the list is drawn.
         </div>
       </div>
 

@@ -42,7 +42,7 @@ export const QUIZ_QUESTIONS = [
   {
     id: "recognition",
     label:
-      "Which of The Seven do you recognize in yourself — and what scar proves it?",
+      "Which of The Seven do you recognize in yourself, and what scar proves it?",
     type: "textarea",
     placeholder:
       "Name one: Young Ronin, Crimson Widow, Old Samurai, Farwalker, Shadow Chief, Iron Vow, Hidden Hand. Explain why.",
@@ -81,7 +81,7 @@ export const QUIZ_QUESTIONS = [
   },
   {
     id: "autonomy",
-    label: "The Seventh is autonomous. What should it do that no team would approve?",
+    label: "Ashborn is autonomous. What should it do that no team would approve?",
     type: "textarea",
     placeholder: "Not violence. Not fraud. A decision only an unhuman operator could make.",
     min: QUIZ_LIMITS.autonomy.min,

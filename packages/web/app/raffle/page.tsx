@@ -4,9 +4,9 @@ import { AuthGate } from "@/components/auth-gate";
 import { RaffleClient } from "./raffle-client";
 
 export const metadata: Metadata = {
-  title: "The Watchtower — SURVIVORS",
+  title: "The Watchtower · SURVIVORS",
   description:
-    "One threshold. A handful of tasks. The top hundred walk by the leaderboard, the next hundred are drawn from those below.",
+    "Ashborn watches. Applications, trial, and giveaways decide the order.",
 };
 
 export default async function RafflePage() {

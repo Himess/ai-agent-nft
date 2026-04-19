@@ -35,7 +35,7 @@ export function ApplicationForm() {
           Your answers are now part of the filter.
         </div>
         <p className="mx-auto max-w-xl text-sm leading-7 text-white/65">
-          Selection is not immediate. The Seventh reviews every entry against
+          Selection is not immediate. Ashborn reviews every entry against
           wallet behavior, presence, and the standard of the order. Silence does
           not mean absence.
         </p>
