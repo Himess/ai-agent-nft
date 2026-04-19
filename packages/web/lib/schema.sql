@@ -149,3 +149,30 @@ CREATE TABLE IF NOT EXISTS quiz_submissions (
 CREATE INDEX IF NOT EXISTS quiz_status_idx     ON quiz_submissions(status);
 CREATE INDEX IF NOT EXISTS quiz_score_idx      ON quiz_submissions(score DESC NULLS LAST);
 CREATE INDEX IF NOT EXISTS quiz_created_at_idx ON quiz_submissions(created_at DESC);
+
+-- 9. Agent / collection WL picks from Twitter.
+-- Flow: @ashborn_agent or @survivorsoneth marks a Twitter handle as winning
+--       a slot → row inserted here with claimed_wallet = NULL. The user visits
+--       the site, connects wallet + links same X account, and hits
+--       /api/claim-twitter to bind their wallet to the pick. Deadline is
+--       T-7 before mint. Unclaimed picks past the deadline are forfeit.
+CREATE TABLE IF NOT EXISTS agent_wl_picks (
+  id               BIGSERIAL PRIMARY KEY,
+  twitter_handle   TEXT NOT NULL,            -- lowercase, no leading @
+  source           TEXT NOT NULL
+                   CHECK (source IN ('ashborn_agent','survivorsoneth')),
+  allocation       TEXT NOT NULL
+                   CHECK (allocation IN ('gtd','fcfs')),
+  reason           TEXT,                     -- tweet URL or short note
+  picked_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  deadline_at      TIMESTAMPTZ NOT NULL,     -- T-7 cutoff
+  claimed_wallet   TEXT REFERENCES user_profiles(wallet) ON DELETE SET NULL,
+  claimed_at       TIMESTAMPTZ,
+  forfeited        BOOLEAN NOT NULL DEFAULT FALSE,
+  UNIQUE (twitter_handle, source, allocation)
+);
+
+CREATE INDEX IF NOT EXISTS agent_wl_picks_handle_idx  ON agent_wl_picks(twitter_handle);
+CREATE INDEX IF NOT EXISTS agent_wl_picks_wallet_idx  ON agent_wl_picks(claimed_wallet) WHERE claimed_wallet IS NOT NULL;
+CREATE INDEX IF NOT EXISTS agent_wl_picks_pending_idx ON agent_wl_picks(deadline_at)
+  WHERE claimed_wallet IS NULL AND forfeited = FALSE;

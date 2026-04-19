@@ -94,7 +94,7 @@ export function SevenEditorial({ entries }: { entries: SevenEntry[] }) {
 
         {/* Foot band */}
         <div
-          className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-4 px-8 pb-8 pt-7"
+          className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 px-5 pb-6 pt-7 sm:gap-4 sm:px-8 sm:pb-8"
           style={{
             background:
               "linear-gradient(180deg, transparent, rgba(10,10,10,.92) 50%)",
@@ -102,21 +102,21 @@ export function SevenEditorial({ entries }: { entries: SevenEntry[] }) {
         >
           <div className="min-w-0 flex-1">
             <div
-              className="mb-2 text-[10px] uppercase"
-              style={{ color: GOLD, letterSpacing: "0.4em" }}
+              className="mb-2 text-[9px] uppercase sm:text-[10px]"
+              style={{ color: GOLD, letterSpacing: "0.35em" }}
             >
               Fragment 0{current.index + 1}
             </div>
             <div
-              className="text-3xl italic leading-tight"
+              className="text-2xl italic leading-tight sm:text-3xl"
               style={{ fontFamily: "var(--font-display)", color: BONE }}
             >
               {isRevealed ? current.title : "Unrevealed"}
             </div>
           </div>
           <div
-            className="flex-shrink-0 text-right text-[10px] uppercase"
-            style={{ color: "rgba(255,255,255,.45)", letterSpacing: "0.35em" }}
+            className="flex-shrink-0 text-right text-[9px] uppercase sm:text-[10px]"
+            style={{ color: "rgba(255,255,255,.45)", letterSpacing: "0.3em" }}
           >
             0{current.index + 1}
             <br />
@@ -138,7 +138,7 @@ export function SevenEditorial({ entries }: { entries: SevenEntry[] }) {
             className="italic"
             style={{
               fontFamily: "var(--font-display)",
-              fontSize: 44,
+              fontSize: "clamp(28px, 4.4vw, 44px)",
               color: BONE,
               lineHeight: 1.15,
             }}
@@ -148,7 +148,7 @@ export function SevenEditorial({ entries }: { entries: SevenEntry[] }) {
               : "Two of the Seven remain unseen. Selection does not show itself all at once."}
           </div>
           <div
-            className="mt-14 grid gap-x-6 gap-y-4 border-t pt-7"
+            className="mt-10 grid gap-x-4 gap-y-3.5 border-t pt-6 sm:mt-14 sm:gap-x-6 sm:gap-y-4 sm:pt-7"
             style={{
               borderColor: BORDER_GOLD,
               gridTemplateColumns: "auto 1fr",

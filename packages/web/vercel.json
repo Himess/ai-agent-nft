@@ -4,10 +4,6 @@
     {
       "path": "/api/cron/agent-engagement",
       "schedule": "0 3 * * *"
-    },
-    {
-      "path": "/api/cron/twitter-verify",
-      "schedule": "0 4 * * *"
     }
   ]
 }

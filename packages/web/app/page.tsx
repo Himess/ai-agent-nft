@@ -138,13 +138,13 @@ export default function Home() {
           <Grain opacity={0.08} />
         </div>
 
-        {/* Top bracket — crest line */}
+        {/* Top bracket - crest line */}
         <div
-          className="relative mx-auto flex max-w-[1440px] justify-between px-6 pt-8 text-[10px] uppercase md:px-12"
-          style={{ color: GOLD, letterSpacing: "0.45em" }}
+          className="relative mx-auto flex max-w-[1440px] flex-wrap items-center justify-between gap-2 px-6 pt-8 text-[9px] uppercase md:px-12 md:text-[10px]"
+          style={{ color: GOLD, letterSpacing: "0.3em" }}
         >
-          <span>Ξ Ethereum · 1111</span>
-          <span>Est. Cycle 0 / Autonomous</span>
+          <span className="md:tracking-[0.45em]">Ξ Ethereum · 1111</span>
+          <span className="md:tracking-[0.45em]">Est. Cycle 0 / Autonomous</span>
         </div>
 
         {/* Center stage */}
@@ -226,13 +226,13 @@ export default function Home() {
             </ScrollReveal>
 
             <ScrollReveal delay={150}>
-              <div className="mt-16 grid items-end gap-12 md:grid-cols-[1.1fr_.9fr]">
+              <div className="mt-12 grid items-end gap-10 md:mt-16 md:grid-cols-[1.1fr_.9fr] md:gap-12">
                 <div>
                   <p
                     className="m-0 italic"
                     style={{
                       fontFamily: "var(--font-display)",
-                      fontSize: 22,
+                      fontSize: "clamp(18px, 2.4vw, 22px)",
                       lineHeight: 1.5,
                       color: "rgba(232,228,220,.92)",
                       maxWidth: 520,
@@ -240,17 +240,17 @@ export default function Home() {
                   >
                     A selected order shaped by collapse, signal, and endurance. Held by seven archetypes and one autonomous agent.
                   </p>
-                  <div className="mt-9 flex flex-wrap gap-3.5">
+                  <div className="mt-9 flex flex-wrap gap-3">
                     <Link
                       href="/apply"
-                      className="inline-flex items-center justify-center rounded-full px-6 py-3 text-[13px] font-medium transition-opacity hover:opacity-90"
+                      className="inline-flex items-center justify-center rounded-full px-5 py-3 text-[13px] font-medium transition-opacity hover:opacity-90 md:px-6"
                       style={{ background: CRIMSON, color: BONE }}
                     >
                       Open Application ↗
                     </Link>
                     <Link
                       href="/quiz"
-                      className="inline-flex items-center justify-center rounded-full border px-6 py-3 text-[13px] font-medium transition-opacity hover:opacity-90"
+                      className="inline-flex items-center justify-center rounded-full border px-5 py-3 text-[13px] font-medium transition-opacity hover:opacity-90 md:px-6"
                       style={{
                         borderColor: GOLD,
                         color: GOLD,
@@ -264,7 +264,7 @@ export default function Home() {
 
                 {/* Dossier stamp */}
                 <div
-                  className="max-w-[280px] justify-self-end border-l pl-6 text-right"
+                  className="max-w-full border-t pt-5 md:max-w-[280px] md:justify-self-end md:border-l md:border-t-0 md:pl-6 md:pt-0 md:text-right"
                   style={{ borderColor: BORDER_GOLD }}
                 >
                   <div
@@ -314,7 +314,7 @@ export default function Home() {
         }}
       >
         <Grain opacity={0.05} />
-        <div className="relative mx-auto grid max-w-[1200px] gap-12 px-6 py-32 md:grid-cols-[160px_1fr] md:px-12">
+        <div className="relative mx-auto grid max-w-[1200px] gap-10 px-6 py-20 md:grid-cols-[160px_1fr] md:gap-12 md:px-12 md:py-32">
           <div className="pt-3">
             <div
               className="text-[10px] uppercase"
@@ -338,7 +338,7 @@ export default function Home() {
                 className="m-0"
                 style={{
                   fontFamily: "var(--font-display)",
-                  fontSize: "clamp(32px, 4.4vw, 64px)",
+                  fontSize: "clamp(26px, 4.4vw, 64px)",
                   fontWeight: 400,
                   lineHeight: 1.18,
                   letterSpacing: "-0.01em",
@@ -404,8 +404,8 @@ export default function Home() {
         }}
       >
         <Grain opacity={0.04} />
-        <div className="relative mx-auto max-w-[1440px] px-6 py-32 md:px-12">
-          <div className="mb-16 grid gap-12 md:grid-cols-[180px_1fr]">
+        <div className="relative mx-auto max-w-[1440px] px-6 py-20 md:px-12 md:py-32">
+          <div className="mb-10 grid gap-8 md:mb-16 md:grid-cols-[180px_1fr] md:gap-12">
             <div>
               <div
                 className="text-[10px] uppercase"
@@ -428,7 +428,7 @@ export default function Home() {
                 className="m-0"
                 style={{
                   fontFamily: "var(--font-display)",
-                  fontSize: "clamp(36px, 4.6vw, 72px)",
+                  fontSize: "clamp(28px, 4.6vw, 72px)",
                   fontWeight: 500,
                   lineHeight: 1.08,
                   letterSpacing: "-0.01em",
@@ -472,7 +472,7 @@ export default function Home() {
           className="pointer-events-none absolute inset-0 flex items-center justify-center italic"
           style={{
             fontFamily: "var(--font-display)",
-            fontSize: "clamp(260px, 38vw, 560px)",
+            fontSize: "clamp(140px, 38vw, 560px)",
             fontWeight: 500,
             lineHeight: 1,
             color: "rgba(140,122,79,.06)",
@@ -483,7 +483,7 @@ export default function Home() {
           1111
         </div>
 
-        <div className="relative max-w-[1120px] px-6 py-32 text-center md:px-12">
+        <div className="relative max-w-[1120px] px-6 py-20 text-center md:px-12 md:py-32">
           <ScrollReveal>
             <div className="mb-7">
               <span
@@ -499,7 +499,7 @@ export default function Home() {
               className="m-0 italic"
               style={{
                 fontFamily: "var(--font-display)",
-                fontSize: "clamp(44px, 6.4vw, 96px)",
+                fontSize: "clamp(32px, 6.4vw, 96px)",
                 fontWeight: 500,
                 lineHeight: 1.14,
                 color: BONE,
