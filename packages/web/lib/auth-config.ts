@@ -2,6 +2,41 @@ import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { SiweMessage } from "siwe";
 import { getSql } from "./db";
+import { computeWalletScore } from "./wallet-score";
+
+// Refresh the wallet score at most once per week — NFT holdings drift but not
+// fast enough to warrant hitting Alchemy on every sign-in.
+const WALLET_SCORE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+
+async function ensureWalletScore(wallet: string): Promise<void> {
+  if (!process.env.ALCHEMY_API_KEY) return; // skip silently in local envs
+  try {
+    const sql = getSql();
+    const rows = await sql`
+      SELECT wallet_scored_at FROM user_profiles WHERE wallet = ${wallet}
+    `;
+    const scoredAt = (rows[0]?.wallet_scored_at ?? null) as Date | null;
+    if (scoredAt && Date.now() - scoredAt.getTime() < WALLET_SCORE_MAX_AGE_MS) {
+      return;
+    }
+    const s = await computeWalletScore(wallet);
+    await sql`
+      UPDATE user_profiles
+         SET wallet_score      = ${s.score},
+             wallet_age_days   = ${s.walletAgeDays},
+             tx_count          = ${s.txCount},
+             nft_usd_value     = ${s.nftUsdValue},
+             bluechip_count    = ${s.bluechipCount},
+             avg_holding_days  = ${s.avgHoldingDays},
+             last_activity_at  = ${s.lastActivityAt},
+             wallet_scored_at  = NOW(),
+             updated_at        = NOW()
+       WHERE wallet = ${wallet}
+    `;
+  } catch (err) {
+    console.warn("wallet-score failed (non-fatal):", err);
+  }
+}
 
 // Pull the CSRF token out of the cookie header. next-auth sets it under
 // `next-auth.csrf-token` in dev and `__Host-next-auth.csrf-token` in prod
@@ -72,6 +107,12 @@ export const authOptions: NextAuthOptions = {
               SET siwe_verified_at = NOW(),
                   updated_at = NOW()
           `;
+
+          // Fire the wallet score computation. It's intentionally awaited
+          // here (~1-2s extra on first sign-in) so downstream consumers can
+          // assume the cache is populated. Subsequent sign-ins skip it
+          // unless the cache is stale.
+          await ensureWalletScore(wallet);
 
           return { id: wallet };
         } catch {
