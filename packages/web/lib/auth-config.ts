@@ -73,7 +73,10 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials, req) {
         try {
-          if (!credentials?.message || !credentials?.signature) return null;
+          if (!credentials?.message || !credentials?.signature) {
+            console.warn("[siwe] missing credentials");
+            return null;
+          }
           const siwe = new SiweMessage(JSON.parse(credentials.message));
           const url = new URL(
             process.env.NEXTAUTH_URL ?? "http://localhost:3000"
@@ -93,7 +96,17 @@ export const authOptions: NextAuthOptions = {
             nonce: csrfToken ?? undefined,
           });
 
-          if (!result.success) return null;
+          if (!result.success) {
+            console.warn("[siwe] verify failed", {
+              hasCsrf: csrfToken != null,
+              msgDomain: siwe.domain,
+              expectDomain: url.host,
+              msgNonce: siwe.nonce?.slice(0, 8),
+              cookieNonce: csrfToken?.slice(0, 8),
+              siweError: result.error,
+            });
+            return null;
+          }
 
           const wallet = result.data.address.toLowerCase();
 
@@ -115,7 +128,8 @@ export const authOptions: NextAuthOptions = {
           await ensureWalletScore(wallet);
 
           return { id: wallet };
-        } catch {
+        } catch (err) {
+          console.error("[siwe] authorize threw", err);
           return null;
         }
       },
