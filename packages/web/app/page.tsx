@@ -40,8 +40,20 @@ const seven: SevenEntry[] = [
     tagline: "Silent, calculating, dangerous.",
     image: "/seven/shadow-chief.jpg",
   },
-  { kind: "sealed", index: 5 },
-  { kind: "sealed", index: 6 },
+  {
+    kind: "revealed",
+    index: 5,
+    title: "The Iron Vow",
+    tagline: "Bound by what cannot be broken.",
+    image: "/seven/iron-vow.jpg",
+  },
+  {
+    kind: "revealed",
+    index: 6,
+    title: "The Hidden Hand",
+    tagline: "Moves before the eye can follow.",
+    image: "/seven/hidden-hand.jpg",
+  },
 ];
 
 const marqueeLines = [

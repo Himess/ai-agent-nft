@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 const links = [
@@ -18,10 +19,17 @@ export function Nav() {
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
         <Link href="/" className="flex items-center gap-3">
           <div
-            className="flex h-11 w-11 items-center justify-center rounded-full border text-xs font-semibold tracking-[0.2em]"
-            style={{ borderColor: "#8C7A4F", color: "#8C7A4F" }}
+            className="relative h-12 w-12 overflow-hidden rounded-full"
+            style={{ boxShadow: "0 0 20px rgba(140,122,79,.15)" }}
           >
-            SVVR
+            <Image
+              src="/logo.jpg"
+              alt="SURVIVORS sigil"
+              fill
+              sizes="48px"
+              priority
+              className="object-cover"
+            />
           </div>
           <div>
             <div
