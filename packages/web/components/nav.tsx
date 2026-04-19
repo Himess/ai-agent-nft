@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { SurvConnectButton } from "./connect-button";
 
 const links = [
   { href: "/", label: "Home" },
@@ -57,22 +58,16 @@ export function Nav() {
 
         <div className="flex items-center gap-3">
           <Link
-            href="/quiz"
+            href="/apply"
             className="hidden rounded-full border px-4 py-2 text-sm font-medium transition-colors hover:border-white/30 sm:block"
             style={{
               borderColor: "rgba(140,122,79,.35)",
               color: "#E8E4DC",
             }}
           >
-            Quiz
-          </Link>
-          <Link
-            href="/apply"
-            className="rounded-full px-4 py-2 text-sm font-medium transition-opacity hover:opacity-90"
-            style={{ background: "#7A0F14", color: "#E8E4DC" }}
-          >
             Applications
           </Link>
+          <SurvConnectButton />
         </div>
       </div>
     </div>
