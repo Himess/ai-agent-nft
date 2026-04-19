@@ -13,19 +13,50 @@ if (!url) {
   process.exit(1);
 }
 
+const RESET_TABLES = [
+  "task_completions",
+  "agent_engagements",
+  "agent_scores",
+  "applications",
+  "quiz_submissions",
+  "social_tasks",
+  "siwe_nonces",
+  "user_profiles",
+];
+
 const pool = new Pool({ connectionString: url });
 
 async function main() {
+  const shouldReset = process.argv.includes("--reset");
   const schemaPath = resolve(here, "..", "lib", "schema.sql");
   const schema = readFileSync(schemaPath, "utf8");
 
-  const statements = schema
-    .split(";")
-    .map((s) => s.trim())
-    .filter(Boolean);
-
   const client = await pool.connect();
   try {
+    if (shouldReset) {
+      console.log("· --reset flag: dropping all managed tables first");
+      for (const t of RESET_TABLES) {
+        process.stdout.write(`  - DROP TABLE IF EXISTS ${t} CASCADE…  `);
+        await client.query(`DROP TABLE IF EXISTS ${t} CASCADE`);
+        console.log("ok");
+      }
+    }
+
+    // Strip `--` line comments first so a stray semicolon inside a comment
+    // (e.g. "handle changes; id doesn't") doesn't break the statement split.
+    const stripped = schema
+      .split(/\r?\n/)
+      .map((line) => {
+        const i = line.indexOf("--");
+        return i === -1 ? line : line.slice(0, i);
+      })
+      .join("\n");
+
+    const statements = stripped
+      .split(";")
+      .map((s) => s.trim())
+      .filter(Boolean);
+
     for (const stmt of statements) {
       const preview = stmt.replace(/\s+/g, " ").slice(0, 80);
       process.stdout.write(`· ${preview}…  `);
@@ -33,10 +64,14 @@ async function main() {
       console.log("ok");
     }
 
-    const { rows } = await client.query<{ n: number }>(
-      "SELECT COUNT(*)::int AS n FROM applications"
-    );
-    console.log(`\napplications table ready — ${rows[0].n} rows.`);
+    const counts: Record<string, number> = {};
+    for (const t of ["user_profiles", "applications", "quiz_submissions", "social_tasks"]) {
+      const { rows } = await client.query<{ n: number }>(
+        `SELECT COUNT(*)::int AS n FROM ${t}`
+      );
+      counts[t] = rows[0].n;
+    }
+    console.log("\nrow counts:", counts);
   } finally {
     client.release();
     await pool.end();
