@@ -73,6 +73,25 @@ export function SurvConnectButton({ compact = false }: { compact?: boolean }) {
                   </button>
                 );
               }
+              // Connected but SIWE sign step was skipped / rejected. The
+              // RainbowKit-SIWE adapter normally auto-prompts, but after a
+              // rejected sign (or if cookies were cleared mid-session) the
+              // user is left in "connected, unauthenticated" limbo — a plain
+              // account pill does not tell them what to do. Surface an
+              // explicit CTA that re-opens the connect modal so the verify
+              // step re-fires.
+              if (authenticationStatus === "unauthenticated") {
+                return (
+                  <button
+                    type="button"
+                    onClick={openConnectModal}
+                    className="inline-flex items-center justify-center rounded-full px-4 py-2 text-sm font-medium transition-opacity hover:opacity-90"
+                    style={{ background: CRIMSON, color: BONE }}
+                  >
+                    {compact ? "Sign" : "Sign to enter"}
+                  </button>
+                );
+              }
               return (
                 <button
                   type="button"
