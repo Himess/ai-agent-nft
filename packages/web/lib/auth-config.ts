@@ -123,6 +123,15 @@ export const authOptions: NextAuthOptions = {
   ],
   session: { strategy: "jwt" },
   secret: process.env.NEXTAUTH_SECRET,
+  pages: {
+    // The SIWE flow is owned by RainbowKit's adapter and is triggered from
+    // the connect button on the landing page. NextAuth's default
+    // /api/auth/signin listing page ships with an inert Message/Signature
+    // form that users should never see — redirect them to / (where the
+    // real connect button lives) instead.
+    signIn: "/",
+    error: "/",
+  },
   callbacks: {
     async jwt({ token, user }) {
       if (user?.id) token.sub = user.id;
