@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 
 // ═══ Grain ══════════════════════════════════════════════════════════
 // SVG fractal-noise overlay. Every section gets this as a thin
@@ -131,8 +131,26 @@ export function ScrollReveal({
 
 // ═══ HeroVideo ═════════════════════════════════════════════════════
 // Autoplay muted loop video with WebM + MP4 sources and JPG poster
-// fallback. Honors prefers-reduced-motion — if the user has reduced
-// motion, we skip autoplay and just show the poster.
+// fallback. Honors prefers-reduced-motion and data-saver / slow-network
+// hints — on 2G/3G or Save-Data, we do not download the video at all,
+// just render the poster. Keeps mobile bandwidth usage predictable on
+// launch day without hurting the desktop experience.
+
+type HeroConnection = {
+  saveData?: boolean;
+  effectiveType?: string;
+};
+
+function shouldSkipVideo(): boolean {
+  if (typeof window === "undefined") return true;
+  if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return true;
+  const conn = (navigator as unknown as { connection?: HeroConnection }).connection;
+  if (conn?.saveData) return true;
+  if (conn?.effectiveType && ["slow-2g", "2g", "3g"].includes(conn.effectiveType)) {
+    return true;
+  }
+  return false;
+}
 
 export function HeroVideo({
   srcMp4,
@@ -146,21 +164,34 @@ export function HeroVideo({
   className?: string;
 }) {
   const ref = useRef<HTMLVideoElement>(null);
+  const [active, setActive] = useState(false);
 
   useEffect(() => {
+    if (shouldSkipVideo()) return;
+    setActive(true);
+  }, []);
+
+  useEffect(() => {
+    if (!active) return;
     const v = ref.current;
     if (!v) return;
-    const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-    if (reduce) {
-      v.removeAttribute("autoplay");
-      v.pause();
-      return;
-    }
-    // Some browsers require an explicit play() after muted autoplay fails silently.
+    // Some browsers need an explicit play() after muted autoplay no-ops.
     const kick = () => v.play().catch(() => {});
     v.addEventListener("loadeddata", kick, { once: true });
     return () => v.removeEventListener("loadeddata", kick);
-  }, []);
+  }, [active]);
+
+  if (!active) {
+    return (
+      <img
+        src={poster}
+        alt=""
+        aria-hidden="true"
+        className={className}
+        draggable={false}
+      />
+    );
+  }
 
   return (
     <video

@@ -157,11 +157,18 @@ the 10% around the APPROVE/REJECT cut line.
 
 | Line item                                     | Cost    |
 |-----------------------------------------------|---------|
-| Vercel Pro (required for cron flexibility + team features) | $20 |
+| Vercel Pro (T-7 → T+14 launch window only, then downgrade) | $20 |
 | Neon Postgres (free tier handles 5k users)     | $0      |
 | Upstash Redis (free tier)                      | $0      |
 | Alchemy (free tier, ~100M CU — 5k users ≈ 2.6M CU) | $0    |
 | **Infra subtotal**                             | **$20** |
+
+Vercel is kept on **Hobby ($0) until T-7**. The project lives in its own
+team (`survivors-nft`) so upgrading it to Pro does not affect the
+founder's other projects. Pro is activated one week before mint for the
+spike window (higher bandwidth + concurrent function invocations + spend
+management) and downgraded back to Hobby two weeks after launch once
+traffic settles. Total Pro exposure ≈ 3 weeks = **one $20 bill**.
 
 ### 5.4 Total
 
@@ -236,7 +243,7 @@ engagement cron runs. Pro unlocks hourly if we need it for a future feature.
 - [ ] Subscribe to X API pay-per-use (set $200 cap)
 - [ ] Create X app for Site (OAuth 2.0, read scope) — tokens in Vercel env
 - [ ] Create X app for Agent (OAuth 2.0, read + write, **no DM scope**) — tokens in agent `.env`
-- [ ] Vercel Pro upgrade
+- [ ] Vercel team `survivors-nft` exists (done 2026-04-20), project transferred from `himess-projects`. Stay on Hobby until T-7; upgrade to Pro at T-7 for the launch window; downgrade to Hobby at T+14.
 - [ ] Anthropic API keys (one for agent, one for web batch scorer)
 - [ ] Custom domain purchased + DNS pointed at Vercel
 - [ ] Agent deployed on Railway/Fly (long-running, not Vercel)
